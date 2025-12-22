@@ -93,7 +93,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                   child: Text(
                     promo['subtitle']!,
                     style: const TextStyle(
-                      color: const Color(0xFFEB932F),
+                      color:  Color(0xFFEB932F),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -103,7 +103,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                 Text(
                   promo['description']!,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                   ),
                 ),

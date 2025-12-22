@@ -174,6 +174,7 @@ class _FilterDrawerState extends State<FilterDrawer> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),

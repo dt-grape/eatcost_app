@@ -1,9 +1,10 @@
 import 'package:eatcost_app/screens/catalog_screen.dart';
-import 'package:eatcost_app/widgets/app_drawer.dart';
-import 'package:eatcost_app/widgets/bottom_nav.dart';
+import 'package:eatcost_app/widgets/app/app_drawer.dart';
+import 'package:eatcost_app/widgets/app/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
+import 'cart_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
   static const List<Widget> _screens = <Widget>[
     HomeScreen(),
     CatalogScreen(),
-    LoginScreen(),
+    CartScreen(),
     LoginScreen(),
     LoginScreen(),
   ];

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../services/api_service.dart';
-import '../widgets/post_card.dart';
+import '../widgets/posts/post_card.dart';
 
 class PostsScreen extends StatefulWidget {
   const PostsScreen({super.key});

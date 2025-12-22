@@ -1,8 +1,9 @@
+import 'package:eatcost_app/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
-import '../widgets/catalog_header.dart';
-import '../widgets/category_tabs.dart';
-import '../widgets/product_card.dart';
-import '../widgets/filter_drawer.dart';
+import '../widgets/catalog/catalog_header.dart';
+import '../widgets/catalog/category_tabs.dart';
+import '../widgets/catalog/product_card.dart';
+import '../widgets/catalog/filter_drawer.dart';
 import '../models/product_model.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -24,24 +25,37 @@ class _CatalogScreenState extends State<CatalogScreen> {
       name: 'Курица (грудка) с картофелем по-домашнему',
       image: 'assets/images/food.png',
       price: 529,
-      weight: 500,
+      weight: 710,
       hasDiscount: true,
+      oldPrice: 664,
+      discountPercent: '-15%',
+      description: 'Вкусное домашнее блюдо из натуральных продуктов',
+      ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
+      nutritionFacts: {
+        'fat': 15.15,
+        'protein': 15.89,
+        'carbs': 16.04,
+        'calories': 264.9,
+      },
     ),
     Product(
       id: '2',
       name: 'Курица (грудка) с картофелем по-домашнему',
-      image: 'assets/images/food.png',
-      price: 529,
-      weight: 500,
+      image: 'assets/images/food2.png',
+      price: 321,
+      weight: 310,
+      hasDiscount: false,
+      oldPrice: 532,
+      discountPercent: '-15%',
+      description: 'Вкусное домашнее блюдо из натуральных продуктов',
+      ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
+      nutritionFacts: {
+        'fat': 11.15,
+        'protein': 32.89,
+        'carbs': 2.04,
+        'calories': 112.9,
+      },
     ),
-    Product(
-      id: '3',
-      name: 'Курица (грудка) с картофелем по-домашнему',
-      image: 'assets/images/food.png',
-      price: 529,
-      weight: 500,
-    ),
-    // Добавь больше продуктов
   ];
 
   final Map<String, int> _cart = {}; // id продукта -> количество
@@ -121,6 +135,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   final quantity = _cart[product.id] ?? 0;
 
                   return ProductCard(
+                    id: product.id,
                     title: product.name,
                     price: product.price,
                     weight: '${product.weight}г',
@@ -132,7 +147,15 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     onIncrement: () => _addToCart(product.id),
                     onDecrement: () => _removeFromCart(product.id),
                     onFavoriteToggle: () {
-                      // Добавить в избранное
+
+                    },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailScreen(product: product)
+                        )
+                      );
                     },
                   );
                 },

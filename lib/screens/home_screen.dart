@@ -1,8 +1,8 @@
-import 'package:eatcost_app/widgets/promo_section.dart';
+import 'package:eatcost_app/widgets/home/promo_section.dart';
 import 'package:flutter/material.dart';
-import '../widgets/promo_carousel.dart';
-import '../widgets/service_cards.dart';
-import '../widgets/category_grid.dart';
+import '../widgets/home/promo_carousel.dart';
+import '../widgets/home/service_cards.dart';
+import '../widgets/home/category_grid.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

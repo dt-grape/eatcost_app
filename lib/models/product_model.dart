@@ -5,6 +5,11 @@ class Product {
   final int price;
   final int weight;
   final bool hasDiscount;
+  final int? oldPrice; 
+  final String? discountPercent; 
+  final String? description; 
+  final String? ingredients; 
+  final Map<String, double>? nutritionFacts;
 
   Product({
     required this.id,
@@ -13,5 +18,10 @@ class Product {
     required this.price,
     required this.weight,
     this.hasDiscount = false,
+    this.oldPrice,
+    this.discountPercent,
+    this.description,
+    this.ingredients,
+    this.nutritionFacts,
   });
 }

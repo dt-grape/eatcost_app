@@ -1,6 +1,8 @@
+import 'package:eatcost_app/screens/how_it_works_screen.dart';
 import 'package:eatcost_app/screens/pricing_plans_screen.dart';
+import 'package:eatcost_app/screens/stores_screen.dart';
 import 'package:flutter/material.dart';
-import '../screens/posts_screen.dart';
+import '../../screens/posts_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -21,12 +23,12 @@ class AppDrawer extends StatelessWidget {
       {
         'title': 'Магазины',
         'icon': Icons.store,
-        'screen': const PostsScreen(),
+        'screen': const StoresScreen(),
       },
       {
         'title': 'Как это работает',
         'icon': Icons.qr_code,
-        'screen': const PostsScreen(),
+        'screen': const HowItWorksScreen(),
       },
       {
         'title': 'Вопросы - ответы',
@@ -161,7 +163,7 @@ class AppDrawer extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

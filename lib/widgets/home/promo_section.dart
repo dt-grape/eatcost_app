@@ -1,6 +1,7 @@
+import 'package:eatcost_app/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
-import '../widgets/product_card.dart';
-import '../models/product_model.dart';
+import '../catalog/product_card.dart';
+import '../../models/product_model.dart';
 
 
 class PromoSection extends StatefulWidget {
@@ -38,17 +39,38 @@ class _PromoSectionState extends State<PromoSection> {
       Product(
         id: '1',
         name: 'Курица (грудка) с картофелем по-домашнему',
-        price: 529,
-        weight: 500,
         image: 'assets/images/food.png',
+        price: 529,
+        weight: 710,
         hasDiscount: true,
+        oldPrice: 664,
+        discountPercent: '-15%',
+        description: 'Вкусное домашнее блюдо из натуральных продуктов',
+        ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
+        nutritionFacts: {
+          'fat': 15.15,
+          'protein': 15.89,
+          'carbs': 16.04,
+          'calories': 264.9,
+        },
       ),
       Product(
         id: '2',
         name: 'Курица (грудка) с картофелем по-домашнему',
-        price: 100,
-        weight: 300,
-        image: 'assets/images/food.png',
+        image: 'assets/images/food2.png',
+        price: 321,
+        weight: 310,
+        hasDiscount: false,
+        oldPrice: 532,
+        discountPercent: '-15%',
+        description: 'Вкусное домашнее блюдо из натуральных продуктов',
+        ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
+        nutritionFacts: {
+          'fat': 11.15,
+          'protein': 32.89,
+          'carbs': 2.04,
+          'calories': 112.9,
+        },
       ),
     ];
 
@@ -132,6 +154,7 @@ class _PromoSectionState extends State<PromoSection> {
                 return SizedBox(
                   width: 260,
                   child: ProductCard(
+                    id: product.id,
                     title: product.name,
                     price: product.price,
                     weight: '${product.weight}г',
@@ -144,6 +167,14 @@ class _PromoSectionState extends State<PromoSection> {
                     onDecrement: () => _removeFromCart(product.id),
                     onFavoriteToggle: () {
                       // Добавить в избранное
+                    },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailScreen(product: product)
+                        )
+                      );
                     },
                   ),
                 );
