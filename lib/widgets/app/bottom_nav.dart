@@ -37,7 +37,7 @@ class BottomNav extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: 'Войти',
+            label: 'Профиль',
           ),
         ],
         currentIndex: currentIndex,

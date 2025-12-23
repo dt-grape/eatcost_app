@@ -1,4 +1,5 @@
 import 'package:eatcost_app/screens/catalog_screen.dart';
+import 'package:eatcost_app/screens/profile_screen.dart';
 import 'package:eatcost_app/widgets/app/app_drawer.dart';
 import 'package:eatcost_app/widgets/app/bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     CatalogScreen(),
     CartScreen(),
     LoginScreen(),
-    LoginScreen(),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
