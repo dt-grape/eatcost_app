@@ -30,7 +30,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
       oldPrice: 664,
       discountPercent: '-15%',
       description: 'Вкусное домашнее блюдо из натуральных продуктов',
-      ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
+      ingredients:
+          'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
       nutritionFacts: {
         'fat': 15.15,
         'protein': 15.89,
@@ -40,21 +41,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
     ),
     Product(
       id: '2',
-      name: 'Курица (грудка) с картофелем по-домашнему',
+      name: 'Рыба на пару с овощами',
       image: 'assets/images/food2.png',
-      price: 1,
-      weight: 310,
-      hasDiscount: false,
-      oldPrice: 532,
-      discountPercent: '-15%',
-      description: 'Вкусное домашнее блюдо из натуральных продуктов',
-      ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
-      nutritionFacts: {
-        'fat': 11.15,
-        'protein': 32.89,
-        'carbs': 2.04,
-        'calories': 112.9,
-      },
+      price: 650,
+      weight: 400,
+    ),
+    Product(
+      id: '3',
+      name: 'Говядина с гречкой',
+      image: 'assets/images/bread.png',
+      price: 580,
+      weight: 450,
+      hasDiscount: true,
+      oldPrice: 700,
+      discountPercent: '-17%',
     ),
   ];
 
@@ -106,10 +106,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           // Табы категорий
           SliverToBoxAdapter(
             child: CategoryTabs(
-              categories: const [
-                'Пельмени и вареники',
-                'Рыба и полуфабрикаты',
-              ],
+              categories: const ['Пельмени и вареники', 'Рыба и полуфабрикаты'],
               selectedCategory: _selectedCategory,
               onCategoryChanged: (category) {
                 setState(() {
@@ -126,41 +123,37 @@ class _CatalogScreenState extends State<CatalogScreen> {
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
-                mainAxisSpacing: 16, 
+                mainAxisSpacing: 16,
                 childAspectRatio: 0.5,
               ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final product = _products[index];
-                  final quantity = _cart[product.id] ?? 0;
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final product = _products[index];
+                final quantity = _cart[product.id] ?? 0;
 
-                  return ProductCard(
-                    id: product.id,
-                    title: product.name,
-                    price: product.price,
-                    weight: '${product.weight}г',
-                    imageUrl: product.image,
-                    hasDiscount: product.hasDiscount,
-                    isInCart: quantity > 0,
-                    count: quantity,
-                    onAddToCart: () => _addToCart(product.id),
-                    onIncrement: () => _addToCart(product.id),
-                    onDecrement: () => _removeFromCart(product.id),
-                    onFavoriteToggle: () {
-
-                    },
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProductDetailScreen(product: product)
-                        )
-                      );
-                    },
-                  );
-                },
-                childCount: _products.length,
-              ),
+                return ProductCard(
+                  id: product.id,
+                  title: product.name,
+                  price: product.price,
+                  weight: '${product.weight}г',
+                  imageUrl: product.image,
+                  hasDiscount: product.hasDiscount,
+                  isInCart: quantity > 0,
+                  count: quantity,
+                  onAddToCart: () => _addToCart(product.id),
+                  onIncrement: () => _addToCart(product.id),
+                  onDecrement: () => _removeFromCart(product.id),
+                  onFavoriteToggle: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ProductDetailScreen(product: product),
+                      ),
+                    );
+                  },
+                );
+              }, childCount: _products.length),
             ),
           ),
         ],

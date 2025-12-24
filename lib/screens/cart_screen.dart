@@ -1,3 +1,4 @@
+import 'package:eatcost_app/screens/checkout_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/cart_item_model.dart';
 import '../widgets/cart/cart_item_card.dart';
@@ -150,7 +151,6 @@ class _CartScreenState extends State<CartScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16),
 
                 // Итоговая сводка
                 CartSummary(
@@ -161,10 +161,15 @@ class _CartScreenState extends State<CartScreen> {
                   finalTotal: _finalTotal,
                   minimumOrderText: 'Минимальный заказ от 1529 ₽',
                   onCheckout: () {
-                    // Оформление заказа
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Переход к оформлению заказа'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CheckoutScreen(
+                          cartItems: _cartItems,
+                          productsTotal: _productsTotal,
+                          deliveryFee: _deliveryFee,
+                          discount: _discount,
+                        ),
                       ),
                     );
                   },

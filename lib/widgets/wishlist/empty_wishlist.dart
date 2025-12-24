@@ -40,23 +40,6 @@ class EmptyWishlist extends StatelessWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: onBrowseProducts,
-              icon: const Icon(Icons.grid_view_rounded),
-              label: const Text('Смотреть каталог'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3D5A3E),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
           ],
         ),
       ),

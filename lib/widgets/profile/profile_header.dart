@@ -68,17 +68,6 @@ class ProfileHeader extends StatelessWidget {
               ],
             ),
           ),
-
-          // Кнопка редактирования
-          IconButton(
-            onPressed: () {
-              // Переход к редактированию профиля
-            },
-            icon: Icon(
-              Icons.edit_outlined,
-              color: Colors.grey.shade600,
-            ),
-          ),
         ],
       ),
     );

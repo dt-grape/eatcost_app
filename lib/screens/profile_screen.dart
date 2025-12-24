@@ -1,10 +1,12 @@
 import 'package:eatcost_app/screens/edit_profile_screen.dart';
+import 'package:eatcost_app/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/profile/profile_header.dart';
 import '../widgets/profile/profile_menu_item.dart';
 import '../widgets/profile/subscription_banner.dart';
+import 'order_history_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -31,13 +33,13 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.person_outline,
               title: 'Профиль',
               onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EditProfileScreen(),
-                    ),
-                  );
-                },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfileScreen(),
+                  ),
+                );
+              },
             ),
 
             // История заказов
@@ -45,9 +47,11 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.shopping_bag_outlined,
               title: 'История заказов',
               onTap: () {
-                // Переход к истории заказов
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('История заказов')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OrderHistoryScreen(),
+                  ),
                 );
               },
             ),
@@ -55,9 +59,11 @@ class ProfileScreen extends StatelessWidget {
             // Баннер подписки
             SubscriptionBanner(
               onTap: () {
-                // Переход к управлению подпиской
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Управление подпиской')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubscriptionScreen(),
+                  ),
                 );
               },
             ),
@@ -67,9 +73,9 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.credit_card_outlined,
               title: 'Способы оплаты',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Способы оплаты')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Способы оплаты')));
               },
             ),
 
@@ -79,23 +85,9 @@ class ProfileScreen extends StatelessWidget {
               title: 'Мои адреса',
               subtitle: 'улица Горького, 75',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Мои адреса')),
-                );
-              },
-            ),
-
-            // Бот в Telegram
-            ProfileMenuItem(
-              icon: Icons.telegram,
-              title: 'Бот в Telegram',
-              subtitle: 'Получайте уведомления по заказам и ответы на вопросы',
-              iconColor: const Color(0xFF0088CC),
-              backgroundColor: const Color(0xFF0088CC).withValues(alpha: 0.1),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Открыть Telegram бот')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Мои адреса')));
               },
             ),
 
@@ -131,10 +123,7 @@ class ProfileScreen extends StatelessWidget {
               authService.logout();
               Navigator.pop(context);
             },
-            child: const Text(
-              'Выйти',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Выйти', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

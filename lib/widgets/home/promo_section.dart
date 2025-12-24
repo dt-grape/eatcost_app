@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../catalog/product_card.dart';
 import '../../models/product_model.dart';
 
-
 class PromoSection extends StatefulWidget {
   const PromoSection({super.key});
 
@@ -40,13 +39,14 @@ class _PromoSectionState extends State<PromoSection> {
         id: '1',
         name: 'Курица (грудка) с картофелем по-домашнему',
         image: 'assets/images/food.png',
-        price: 529,
+        price: 1,
         weight: 710,
         hasDiscount: true,
         oldPrice: 664,
         discountPercent: '-15%',
         description: 'Вкусное домашнее блюдо из натуральных продуктов',
-        ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
+        ingredients:
+            'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
         nutritionFacts: {
           'fat': 15.15,
           'protein': 15.89,
@@ -56,21 +56,20 @@ class _PromoSectionState extends State<PromoSection> {
       ),
       Product(
         id: '2',
-        name: 'Курица (грудка) с картофелем по-домашнему',
+        name: 'Рыба на пару с овощами',
         image: 'assets/images/food2.png',
-        price: 321,
-        weight: 310,
-        hasDiscount: false,
-        oldPrice: 532,
-        discountPercent: '-15%',
-        description: 'Вкусное домашнее блюдо из натуральных продуктов',
-        ingredients: 'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
-        nutritionFacts: {
-          'fat': 11.15,
-          'protein': 32.89,
-          'carbs': 2.04,
-          'calories': 112.9,
-        },
+        price: 650,
+        weight: 400,
+      ),
+      Product(
+        id: '3',
+        name: 'Говядина с гречкой',
+        image: 'assets/images/bread.png',
+        price: 580,
+        weight: 450,
+        hasDiscount: true,
+        oldPrice: 700,
+        discountPercent: '-17%',
       ),
     ];
 
@@ -118,7 +117,10 @@ class _PromoSectionState extends State<PromoSection> {
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF2C4C3B),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -172,8 +174,9 @@ class _PromoSectionState extends State<PromoSection> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ProductDetailScreen(product: product)
-                        )
+                          builder: (context) =>
+                              ProductDetailScreen(product: product),
+                        ),
                       );
                     },
                   ),

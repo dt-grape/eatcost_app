@@ -11,7 +11,7 @@ class PromoCodeInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F7F8),
         borderRadius: BorderRadius.circular(12),

@@ -1,5 +1,6 @@
 import 'package:eatcost_app/screens/catalog_screen.dart';
 import 'package:eatcost_app/screens/profile_screen.dart';
+import 'package:eatcost_app/screens/search_screen.dart';
 import 'package:eatcost_app/screens/wishlist_screen.dart';
 import 'package:eatcost_app/widgets/app/app_drawer.dart';
 import 'package:eatcost_app/widgets/app/bottom_nav.dart';
@@ -49,12 +50,13 @@ class _MainScreenState extends State<MainScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-          IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
           ),
         ],
       ),
