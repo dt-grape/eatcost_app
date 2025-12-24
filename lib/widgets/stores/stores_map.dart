@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -30,10 +31,14 @@ class _StoresMapState extends State<StoresMap> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            print('Страница начала загрузку: $url');
+            if (kDebugMode) {
+              print('Страница начала загрузку: $url');
+            }
           },
           onPageFinished: (url) {
-            print('Страница загружена: $url');
+            if (kDebugMode) {
+              print('Страница загружена: $url');
+            }
             if (mounted) {
               setState(() {
                 _isMapLoaded = true;
@@ -41,7 +46,9 @@ class _StoresMapState extends State<StoresMap> {
             }
           },
           onWebResourceError: (error) {
-            print('Ошибка загрузки: ${error.description}');
+            if (kDebugMode) {
+              print('Ошибка загрузки: ${error.description}');
+            }
           },
         ),
       )
@@ -60,7 +67,7 @@ class _StoresMapState extends State<StoresMap> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

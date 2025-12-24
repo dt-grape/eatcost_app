@@ -146,7 +146,7 @@ class _PromoSectionState extends State<PromoSection> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
               itemCount: products.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final product = products[index];
                 final quantity = _cart[product.id] ?? 0;

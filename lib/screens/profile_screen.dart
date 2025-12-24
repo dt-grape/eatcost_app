@@ -91,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
               title: 'Бот в Telegram',
               subtitle: 'Получайте уведомления по заказам и ответы на вопросы',
               iconColor: const Color(0xFF0088CC),
-              backgroundColor: const Color(0xFF0088CC).withOpacity(0.1),
+              backgroundColor: const Color(0xFF0088CC).withValues(alpha: 0.1),
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Открыть Telegram бот')),
@@ -104,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.logout,
               title: 'Выйти из профиля',
               iconColor: Colors.red,
-              backgroundColor: Colors.red.withOpacity(0.1),
+              backgroundColor: Colors.red.withValues(alpha: 0.1),
               onTap: () {
                 _showLogoutDialog(context, authService);
               },

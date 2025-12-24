@@ -16,11 +16,13 @@ class _PromoCarouselState extends State<PromoCarousel> {
       'title': 'Вкусная готовая еда',
       'subtitle': 'с доставкой',
       'description': 'Только свежие и натуральные\nпродукты с доставкой на дом',
+      'imagePath': 'assets/images/bannerbg.png'
     },
     {
       'title': 'Свежие продукты',
       'subtitle': 'каждый день',
       'description': 'Доставка свежих продуктов\nпрямо к вашей двери',
+      'imagePath': 'assets/images/bannerbg.png'
     },
   ];
 
@@ -68,6 +70,33 @@ class _PromoCarouselState extends State<PromoCarousel> {
       ),
       child: Stack(
         children: [
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomRight: Radius.circular(24),
+              ),
+              child: Image.asset(
+                promo['imagePath']!,
+                width: 250,
+                height: 250,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 150,
+                    height: 150,
+                    color: Colors.white.withValues(alpha: 0.1),
+                    child: const Icon(
+                      Icons.image,
+                      size: 50,
+                      color: Colors.white30,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
