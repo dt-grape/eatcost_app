@@ -7,16 +7,34 @@ import '../widgets/catalog/filter_drawer.dart';
 import '../models/product_model.dart';
 
 class CatalogScreen extends StatefulWidget {
-  const CatalogScreen({super.key});
+  final String? initialCategory;
+
+  const CatalogScreen({
+    super.key,
+    this.initialCategory,
+  });
 
   @override
-  State<CatalogScreen> createState() => _CatalogScreenState();
+  State<CatalogScreen> createState() => CatalogScreenState();
 }
 
-class _CatalogScreenState extends State<CatalogScreen> {
+class CatalogScreenState extends State<CatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  String _selectedCategory = 'Пельмени и вареники';
+  late String _selectedCategory;
   String _sortBy = 'По популярности';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory ?? 'Готовая еда';
+  }
+
+  // Публичный метод для изменения категории извне
+  void setCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+  }
 
   // Пример данных
   final List<Product> _products = [
@@ -24,7 +42,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
       id: '1',
       name: 'Курица (грудка) с картофелем по-домашнему',
       image: 'assets/images/food.png',
-      price: 1,
+      price: 529,
       weight: 710,
       hasDiscount: true,
       oldPrice: 664,
@@ -106,7 +124,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
           // Табы категорий
           SliverToBoxAdapter(
             child: CategoryTabs(
-              categories: const ['Пельмени и вареники', 'Рыба и полуфабрикаты'],
+              categories: const [
+                'Готовая еда',
+                'Молочка',
+                'Хлеб',
+                'Мясо',
+                'Пельмени и вареники',
+                'Рыба и полуфабрикаты'
+              ],
               selectedCategory: _selectedCategory,
               onCategoryChanged: (category) {
                 setState(() {
@@ -126,34 +151,36 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 mainAxisSpacing: 16,
                 childAspectRatio: 0.5,
               ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final product = _products[index];
-                final quantity = _cart[product.id] ?? 0;
-
-                return ProductCard(
-                  id: product.id,
-                  title: product.name,
-                  price: product.price,
-                  weight: '${product.weight}г',
-                  imageUrl: product.image,
-                  hasDiscount: product.hasDiscount,
-                  isInCart: quantity > 0,
-                  count: quantity,
-                  onAddToCart: () => _addToCart(product.id),
-                  onIncrement: () => _addToCart(product.id),
-                  onDecrement: () => _removeFromCart(product.id),
-                  onFavoriteToggle: () {},
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProductDetailScreen(product: product),
-                      ),
-                    );
-                  },
-                );
-              }, childCount: _products.length),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final product = _products[index];
+                  final quantity = _cart[product.id] ?? 0;
+                  return ProductCard(
+                    id: product.id,
+                    title: product.name,
+                    price: product.price,
+                    weight: '${product.weight}г',
+                    imageUrl: product.image,
+                    hasDiscount: product.hasDiscount,
+                    isInCart: quantity > 0,
+                    count: quantity,
+                    onAddToCart: () => _addToCart(product.id),
+                    onIncrement: () => _addToCart(product.id),
+                    onDecrement: () => _removeFromCart(product.id),
+                    onFavoriteToggle: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ProductDetailScreen(product: product),
+                        ),
+                      );
+                    },
+                  );
+                },
+                childCount: _products.length,
+              ),
             ),
           ),
         ],

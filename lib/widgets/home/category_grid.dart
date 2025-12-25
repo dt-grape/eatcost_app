@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class CategoryGrid extends StatelessWidget {
-  const CategoryGrid({super.key});
+  final Function(String)? onCategorySelected;
+
+  const CategoryGrid({
+    super.key,
+    this.onCategorySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +30,7 @@ class CategoryGrid extends StatelessWidget {
     ];
 
     return Container(
-      color: Color(0xFFFFFFFF),
+      color: const Color(0xFFFFFFFF),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: GridView.builder(
@@ -40,6 +45,7 @@ class CategoryGrid extends StatelessWidget {
           itemCount: categories.length,
           itemBuilder: (context, index) {
             return _buildCategoryCard(
+              context,
               categories[index]['title']!,
               categories[index]['image']!,
             );
@@ -49,10 +55,15 @@ class CategoryGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(String title, String imagePath) {
+  Widget _buildCategoryCard(
+    BuildContext context,
+    String title,
+    String imagePath,
+  ) {
     return GestureDetector(
       onTap: () {
-        // Навигация к категории
+        // Вызываем callback для переключения на каталог с категорией
+        onCategorySelected?.call(title);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -87,7 +98,6 @@ class CategoryGrid extends StatelessWidget {
                   },
                 ),
               ),
-
               // Название категории
               Positioned(
                 top: 16,

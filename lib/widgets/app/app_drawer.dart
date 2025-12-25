@@ -1,8 +1,9 @@
+import 'package:eatcost_app/screens/faq_screen.dart';
 import 'package:eatcost_app/screens/how_it_works_screen.dart';
 import 'package:eatcost_app/screens/pricing_plans_screen.dart';
 import 'package:eatcost_app/screens/stores_screen.dart';
 import 'package:flutter/material.dart';
-import '../../screens/posts_screen.dart';
+import 'package:eatcost_app/screens/posts_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -33,7 +34,7 @@ class AppDrawer extends StatelessWidget {
       {
         'title': 'Вопросы - ответы',
         'icon': Icons.question_answer,
-        'screen': const PostsScreen(),
+        'screen': const FaqScreen(),
       },
     ];
 

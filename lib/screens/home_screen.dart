@@ -5,19 +5,26 @@ import '../widgets/home/service_cards.dart';
 import '../widgets/home/category_grid.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final Function(String)? onCategorySelected;
+
+  const HomeScreen({
+    super.key,
+    this.onCategorySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
-        children: const [
+        children: [
           SizedBox(height: 16),
           PromoCarousel(),
           SizedBox(height: 24),
           ServiceCards(),
           SizedBox(height: 48),
-          CategoryGrid(),
+          CategoryGrid(
+            onCategorySelected: onCategorySelected,
+          ),
           PromoSection(),
         ],
       ),

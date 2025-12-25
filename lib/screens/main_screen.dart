@@ -17,18 +17,27 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  String? _selectedCategory;
 
-  static const List<Widget> _screens = <Widget>[
-    HomeScreen(),
-    CatalogScreen(),
-    CartScreen(),
-    WishlistScreen(),
-    ProfileScreen(),
-  ];
+  // Ключи для управления состоянием экранов
+  final GlobalKey<NavigatorState> _homeNavigatorKey = GlobalKey<NavigatorState>();
+  final GlobalKey<CatalogScreenState> _catalogKey = GlobalKey<CatalogScreenState>();
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void navigateToCatalogWithCategory(String category) {
+    setState(() {
+      _selectedIndex = 1; // Индекс CatalogScreen
+      _selectedCategory = category;
+    });
+    
+    // Применяем категорию после перехода
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _catalogKey.currentState?.setCategory(category);
     });
   }
 
@@ -61,7 +70,21 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       drawer: const AppDrawer(),
-      body: _screens.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          HomeScreen(
+            onCategorySelected: navigateToCatalogWithCategory,
+          ),
+          CatalogScreen(
+            key: _catalogKey,
+            initialCategory: _selectedCategory,
+          ),
+          const CartScreen(),
+          const WishlistScreen(),
+          const ProfileScreen(),
+        ],
+      ),
       bottomNavigationBar: BottomNav(
         currentIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
