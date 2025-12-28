@@ -1,18 +1,17 @@
-import 'package:eatcost_app/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/catalog/catalog_header.dart';
 import '../widgets/catalog/category_tabs.dart';
 import '../widgets/catalog/product_card.dart';
 import '../widgets/catalog/filter_drawer.dart';
-import '../models/product_model.dart';
+import '../models/product_api_model.dart';
+import '../models/category_model.dart';
+import '../services/api_service.dart';
 
 class CatalogScreen extends StatefulWidget {
-  final String? initialCategory;
+  final int? initialCategoryId;
 
-  const CatalogScreen({
-    super.key,
-    this.initialCategory,
-  });
+  const CatalogScreen({super.key, this.initialCategoryId});
 
   @override
   State<CatalogScreen> createState() => CatalogScreenState();
@@ -21,12 +20,20 @@ class CatalogScreen extends StatefulWidget {
 class CatalogScreenState extends State<CatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late String _selectedCategory;
+  late int _selectedCategoryId;
   String _sortBy = 'По популярности';
+
+  List<ProductCategory> _productCategories = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _selectedCategory = widget.initialCategory ?? 'Готовая еда';
+    _selectedCategory = 'Каталог'; // Пока не используется
+    _selectedCategoryId =
+        widget.initialCategoryId ?? 340; // Выпечка по умолчанию
+    _loadProducts();
   }
 
   // Публичный метод для изменения категории извне
@@ -36,154 +43,269 @@ class CatalogScreenState extends State<CatalogScreen> {
     });
   }
 
-  // Пример данных
-  final List<Product> _products = [
-    Product(
-      id: '1',
-      name: 'Курица (грудка) с картофелем по-домашнему',
-      image: 'assets/images/food.png',
-      price: 529,
-      weight: 710,
-      hasDiscount: true,
-      oldPrice: 664,
-      discountPercent: '-15%',
-      description: 'Вкусное домашнее блюдо из натуральных продуктов',
-      ingredients:
-          'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
-      nutritionFacts: {
-        'fat': 15.15,
-        'protein': 15.89,
-        'carbs': 16.04,
-        'calories': 264.9,
-      },
-    ),
-    Product(
-      id: '2',
-      name: 'Рыба на пару с овощами',
-      image: 'assets/images/food2.png',
-      price: 650,
-      weight: 400,
-    ),
-    Product(
-      id: '3',
-      name: 'Говядина с гречкой',
-      image: 'assets/images/bread.png',
-      price: 580,
-      weight: 450,
-      hasDiscount: true,
-      oldPrice: 700,
-      discountPercent: '-17%',
-    ),
-  ];
+  // Новый метод для установки categoryId
+  void setCategoryId(int categoryId) {
+    setState(() {
+      _selectedCategoryId = categoryId;
+    });
+    _loadProducts(); // Перезагружаем продукты при смене категории
+  }
 
-  final Map<String, int> _cart = {}; // id продукта -> количество
+  Future<void> _loadProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final apiService = ApiService();
+      final categories = await apiService.getProducts(
+        categoryId: _selectedCategoryId,
+      );
+
+      setState(() {
+        _productCategories = categories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  // НОВЫЙ МЕТОД: Обновление без показа индикатора загрузки
+  Future<void> _refreshProducts() async {
+    try {
+      final apiService = ApiService();
+      final categories = await apiService.getProducts(
+        categoryId: _selectedCategoryId,
+      );
+
+      setState(() {
+        _productCategories = categories;
+        _error = null;
+      });
+    } catch (e) {
+      // При ошибке обновления показываем снэкбар, но не меняем состояние загрузки
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка обновления: ${e.toString()}'),
+            action: SnackBarAction(
+              label: 'Повторить',
+              onPressed: _refreshProducts,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  List<Product> get _products {
+    // Объединяем все продукты из всех категорий
+    return _productCategories.expand((category) => category.items).toList();
+  }
+
+  String _getCategoryTitle() {
+    final category = availableCategories.firstWhere(
+      (cat) => cat.id == _selectedCategoryId,
+      orElse: () =>
+          Category(id: _selectedCategoryId, name: 'Каталог', image: ''),
+    );
+    return category.name;
+  }
 
   void _openFilters() {
     _scaffoldKey.currentState?.openEndDrawer();
   }
 
-  void _addToCart(String productId) {
-    setState(() {
-      _cart[productId] = (_cart[productId] ?? 0) + 1;
-    });
-  }
+  Future<void> _addToCart(int productId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final apiService = ApiService();
+      apiService.setToken(token);
 
-  void _removeFromCart(String productId) {
-    setState(() {
-      if (_cart[productId] != null && _cart[productId]! > 0) {
-        _cart[productId] = _cart[productId]! - 1;
-        if (_cart[productId] == 0) {
-          _cart.remove(productId);
-        }
+      await apiService.addItemToCart(productId: productId, quantity: 1);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Товар добавлен в корзину'),
+            duration: Duration(seconds: 1),
+          ),
+        );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF7F7F8),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF7F7F8),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 100, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Ошибка загрузки продуктов',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadProducts,
+                child: const Text('Повторить'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF7F7F8),
-      body: CustomScrollView(
-        slivers: [
-          // Заголовок с кнопками
-          SliverToBoxAdapter(
-            child: CatalogHeader(
-              title: 'Каталог',
-              itemCount: 1000,
-              sortBy: _sortBy,
-              onFilterTap: _openFilters,
-              onSortChanged: (value) {
-                setState(() {
-                  _sortBy = value;
-                });
-              },
-            ),
-          ),
-
-          // Табы категорий
-          SliverToBoxAdapter(
-            child: CategoryTabs(
-              categories: const [
-                'Готовая еда',
-                'Молочка',
-                'Хлеб',
-                'Мясо',
-                'Пельмени и вареники',
-                'Рыба и полуфабрикаты'
-              ],
-              selectedCategory: _selectedCategory,
-              onCategoryChanged: (category) {
-                setState(() {
-                  _selectedCategory = category;
-                });
-              },
-            ),
-          ),
-
-          // Сетка продуктов
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.5,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final product = _products[index];
-                  final quantity = _cart[product.id] ?? 0;
-                  return ProductCard(
-                    id: product.id,
-                    title: product.name,
-                    price: product.price,
-                    weight: '${product.weight}г',
-                    imageUrl: product.image,
-                    hasDiscount: product.hasDiscount,
-                    isInCart: quantity > 0,
-                    count: quantity,
-                    onAddToCart: () => _addToCart(product.id),
-                    onIncrement: () => _addToCart(product.id),
-                    onDecrement: () => _removeFromCart(product.id),
-                    onFavoriteToggle: () {},
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ProductDetailScreen(product: product),
-                        ),
-                      );
-                    },
-                  );
+      body: RefreshIndicator(
+        onRefresh: _refreshProducts,
+        child: CustomScrollView(
+          slivers: [
+            // Заголовок с кнопками
+            SliverToBoxAdapter(
+              child: CatalogHeader(
+                title: _getCategoryTitle(),
+                itemCount: _products
+                    .length, // Обновлено: показываем реальное количество
+                sortBy: _sortBy,
+                onFilterTap: _openFilters,
+                onSortChanged: (value) {
+                  setState(() {
+                    _sortBy = value;
+                  });
                 },
-                childCount: _products.length,
               ),
             ),
-          ),
-        ],
+
+            // Табы категорий
+            SliverToBoxAdapter(
+              child: CategoryTabs(
+                categories: const [
+                  'Готовая еда',
+                  'Молочка',
+                  'Хлеб',
+                  'Мясо',
+                  'Пельмени и вареники',
+                  'Рыба и полуфабрикаты',
+                ],
+                selectedCategory: _selectedCategory,
+                onCategoryChanged: (category) {
+                  setState(() {
+                    _selectedCategory = category;
+                  });
+                },
+              ),
+            ),
+
+            // ОБНОВЛЕНО: Проверка на пустой список продуктов
+            if (_products.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 100,
+                        color: Colors.grey.shade300,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Нет товаров',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Потяните вниз для обновления',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              // Сетка продуктов
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.5,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final product = _products[index];
+                    return ProductCard(
+                      id: product.id.toString(),
+                      title: product.name,
+                      price: product.price.toInt(),
+                      weight: '${product.weight}г',
+                      imageUrl: product.image,
+                      hasDiscount: product.hasDiscount,
+                      onAddToCart: () => _addToCart(product.id),
+                      onTap: () {
+                        // TODO: Update ProductDetailScreen to use new Product model
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Детали продукта пока не реализованы',
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }, childCount: _products.length),
+                ),
+              ),
+          ],
+        ),
       ),
       endDrawer: FilterDrawer(
         onApplyFilters: (filters) {

@@ -28,6 +28,8 @@ class CartItem {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+
+
     return CartItem(
       key: json['key'],
       id: json['id'],
@@ -37,10 +39,10 @@ class CartItem {
       sku: json['sku'] ?? '',
       permalink: json['permalink'],
       image: json['image'],
-      price: json['price'],
-      regularPrice: json['regular_price'],
-      salePrice: json['sale_price'],
-      lineTotal: json['line_total'],
+      price: json['price'] ?? '0',
+      regularPrice: json['regular_price'] ?? '0',
+      salePrice: json['sale_price'] ?? '0',
+      lineTotal: json['line_total'] ?? '0',
     );
   }
 }

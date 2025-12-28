@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 
 class ProductCard extends StatelessWidget {
-  final String id; // Добавь id
+  final String id;
   final String title;
   final int price;
   final String weight;
   final String imageUrl;
   final bool hasDiscount;
-  final bool isInCart;
-  final int count;
   final VoidCallback onAddToCart;
-  final VoidCallback onIncrement;
-  final VoidCallback onDecrement;
-  final VoidCallback? onFavoriteToggle;
-  final VoidCallback? onTap; // Добавь callback для навигации
+  final VoidCallback? onTap;
 
   const ProductCard({
     super.key,
@@ -23,12 +18,7 @@ class ProductCard extends StatelessWidget {
     required this.weight,
     required this.imageUrl,
     this.hasDiscount = false,
-    this.isInCart = false,
-    this.count = 0,
     required this.onAddToCart,
-    required this.onIncrement,
-    required this.onDecrement,
-    this.onFavoriteToggle,
     this.onTap,
   });
 
@@ -62,22 +52,27 @@ class ProductCard extends StatelessWidget {
                     height: 150,
                     width: double.infinity,
                     color: Colors.grey[200],
-                    child: Image.asset(
+                    child: Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.fastfood, size: 50, color: Colors.grey),
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.fastfood,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
-                
                 // Бейдж "АКЦИЯ"
                 if (hasDiscount)
                   Positioned(
                     top: 12,
                     left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF09C3C),
                         borderRadius: BorderRadius.circular(8),
@@ -92,28 +87,9 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                
-                // Кнопка "Лайк"
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: onFavoriteToggle,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.favorite_border, size: 20),
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 12),
-      
             // Название
             Text(
               title,
@@ -126,7 +102,6 @@ class ProductCard extends StatelessWidget {
               ),
             ),
             const Spacer(),
-      
             // Цена и Вес
             Row(
               children: [
@@ -139,77 +114,42 @@ class ProductCard extends StatelessWidget {
                 ),
                 Text(
                   ' / шт.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 const Spacer(),
                 Text(
                   weight,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-      
-            // Кнопка (Логика отображения: Корзина или Счетчик)
-            if (!isInCart)
-              // Вариант 1: Зеленая кнопка "В корзину"
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: onAddToCart,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C4C3B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  icon: const Icon(Icons.shopping_basket_outlined, color: Colors.white),
-                  label: const Text(
-                    'В корзину',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+            // Кнопка "В корзину"
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: onAddToCart,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2C4C3B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-              )
-            else
-              // Вариант 2: Счетчик количества
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F3F5),
-                  borderRadius: BorderRadius.circular(16),
+                icon: const Icon(
+                  Icons.shopping_basket_outlined,
+                  color: Colors.white,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: onDecrement,
-                      icon: const Icon(Icons.remove, color: Colors.black),
-                    ),
-                    Text(
-                      '$count шт.',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: onIncrement,
-                      icon: const Icon(Icons.add, color: Colors.black),
-                    ),
-                  ],
+                label: const Text(
+                  'В корзину',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+            ),
           ],
         ),
       ),

@@ -4,12 +4,14 @@ class SearchBarWidget extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onClear;
+  final Function(String)? onSubmitted;
 
   const SearchBarWidget({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.onClear,
+    this.onSubmitted,
   });
 
   @override
@@ -23,31 +25,19 @@ class SearchBarWidget extends StatelessWidget {
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        autofocus: true,
+        onSubmitted: onSubmitted,
         decoration: InputDecoration(
           hintText: 'Поиск товаров...',
-          hintStyle: TextStyle(
-            color: Colors.grey.shade500,
-            fontSize: 16,
-          ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: Colors.grey.shade600,
-          ),
+          prefixIcon: const Icon(Icons.search),
           suffixIcon: controller.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.grey.shade600,
-                  ),
-                  onPressed: onClear,
-                )
+              ? IconButton(icon: const Icon(Icons.clear), onPressed: onClear)
               : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        ),
-        style: const TextStyle(
-          fontSize: 16,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade100,
         ),
       ),
     );

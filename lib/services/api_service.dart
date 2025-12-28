@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
 import '../models/cart_model.dart';
+import '../models/product_api_model.dart';
 
 class ApiService {
   static const String baseUrl = 'https://eatcost.ru/wp-json/wp/v2';
@@ -229,6 +230,94 @@ class ApiService {
     }
   }
 
+  // ДОБАВЛЕНИЕ ТОВАРА В КОРЗИНУ
+  Future<void> addItemToCart({
+    required int productId,
+    required int quantity,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$backendUrl/cart/add-item'),
+        headers: _getHeaders(withAuth: true),
+        body: jsonEncode({'product_id': productId, 'quantity': quantity}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Токен недействителен');
+      } else {
+        throw Exception('Ошибка добавления товара: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ошибка: $e');
+    }
+  }
+
+  // УДАЛЕНИЕ ТОВАРА ИЗ КОРЗИНЫ
+  Future<Cart> removeItemFromCart({required String productKey}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$backendUrl/cart/remove-item'),
+        headers: _getHeaders(withAuth: true),
+        body: jsonEncode({'product_key': productKey}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = jsonDecode(response.body);
+        return Cart.fromJson(jsonData['data']);
+      } else if (response.statusCode == 401) {
+        throw Exception('Токен недействителен');
+      } else {
+        throw Exception('Ошибка удаления товара: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ошибка: $e');
+    }
+  }
+
+  // ИЗМЕНЕНИЕ КОЛИЧЕСТВА ТОВАРА В КОРЗИНЕ
+  Future<void> editCartItem({
+    required String key,
+    required int quantity,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$backendUrl/cart/edit-item'),
+        headers: _getHeaders(withAuth: true),
+        body: jsonEncode({'key': key, 'quantity': quantity}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Токен недействителен');
+      } else {
+        throw Exception('Ошибка изменения количества: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ошибка: $e');
+    }
+  }
+
+  // ПОЛУЧЕНИЕ ПРОДУКТОВ
+  Future<List<ProductCategory>> getProducts({int? categoryId}) async {
+    try {
+      final queryParams = categoryId != null ? '?category_id=$categoryId' : '';
+      final url = '$backendUrl/products$queryParams';
+      final response = await http.get(Uri.parse(url), headers: _getHeaders());
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List;
+        return data.map((item) => ProductCategory.fromJson(item)).toList();
+      } else {
+        throw Exception('Ошибка загрузки продуктов: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ошибка: $e');
+    }
+  }
+
   // ОБНОВЛЕНИЕ JWT ТОКЕНА
   Future<Map<String, dynamic>> refreshToken(String jwt) async {
     try {
@@ -248,4 +337,30 @@ class ApiService {
       throw Exception('Ошибка подключения: $e');
     }
   }
+
+  Future<Map<String, dynamic>> searchProducts({required String query}) async {
+  final uri = Uri.parse('$backendUrl/products/search').replace(
+    queryParameters: {'query': query},
+  );
+  
+  final response = await http.get(
+    uri,
+    headers: {'Content-Type': 'application/json'},
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    
+    return {
+      'query': data['query'],
+      'count': data['count'],
+      'results': (data['results'] as List)
+          .map((item) => Product.fromJson(item))
+          .toList(),
+    };
+  } else {
+    throw Exception('Ошибка поиска товаров: ${response.statusCode}');
+  }
+}
+
 }

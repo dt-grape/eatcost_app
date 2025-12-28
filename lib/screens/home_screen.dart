@@ -5,7 +5,7 @@ import '../widgets/home/service_cards.dart';
 import '../widgets/home/category_grid.dart';
 
 class HomeScreen extends StatelessWidget {
-  final Function(String)? onCategorySelected;
+  final Function(int)? onCategorySelected;
 
   const HomeScreen({
     super.key,

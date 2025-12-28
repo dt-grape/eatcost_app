@@ -1,10 +1,11 @@
-import 'package:eatcost_app/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
-import '../models/product_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/product_api_model.dart';
 import '../widgets/catalog/product_card.dart';
 import '../widgets/search/search_bar_widget.dart';
 import '../widgets/search/search_history_item.dart';
 import '../widgets/search/popular_search_chip.dart';
+import '../services/api_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,11 +17,12 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-
-  List<Product> _allProducts = [];
-  List<Product> _filteredProducts = [];
+  List<Product> _searchResults = [];
   List<String> _searchHistory = [];
   bool _isSearching = false;
+  bool _isLoading = false;
+  String? _error;
+  int _resultCount = 0;
 
   final List<String> _popularSearches = [
     'Курица',
@@ -34,9 +36,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProducts();
     _loadSearchHistory();
-    _searchController.addListener(_onSearchChanged);
   }
 
   @override
@@ -46,74 +46,17 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  void _loadProducts() {
-    _allProducts = [
-      Product(
-        id: '1',
-        name: 'Курица (грудка) с картофелем по-домашнему',
-        image: 'assets/images/food.png',
-        price: 1,
-        weight: 710,
-        hasDiscount: true,
-        oldPrice: 664,
-        discountPercent: '-15%',
-        description: 'Вкусное домашнее блюдо из натуральных продуктов',
-        ingredients:
-            'Гренки ржаные, картофель фри, наггетсы, картофельные дольки, хот чиз, соус барбекю, соус сырный',
-        nutritionFacts: {
-          'fat': 15.15,
-          'protein': 15.89,
-          'carbs': 16.04,
-          'calories': 264.9,
-        },
-      ),
-      Product(
-        id: '2',
-        name: 'Рыба на пару с овощами',
-        image: 'assets/images/food2.png',
-        price: 650,
-        weight: 400,
-      ),
-      Product(
-        id: '3',
-        name: 'Говядина с гречкой',
-        image: 'assets/images/bread.png',
-        price: 580,
-        weight: 450,
-        hasDiscount: true,
-        oldPrice: 700,
-        discountPercent: '-17%',
-      ),
-    ];
-  }
-
-  final Map<String, int> _cart = {};
-
-  void _addToCart(String productId) {
+  void _loadSearchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _cart[productId] = (_cart[productId] ?? 0) + 1;
+      _searchHistory = prefs.getStringList('search_history') ?? [];
     });
   }
 
-  void _removeFromCart(String productId) {
-    setState(() {
-      if (_cart[productId] != null && _cart[productId]! > 0) {
-        _cart[productId] = _cart[productId]! - 1;
-        if (_cart[productId] == 0) {
-          _cart.remove(productId);
-        }
-      }
-    });
-  }
-
-  void _loadSearchHistory() {
-    // TODO: Загрузить историю из SharedPreferences
-    _searchHistory = ['Курица', 'Рыба', 'Салат'];
-  }
-
-  void _saveSearchHistory(String query) {
+  void _saveSearchHistory(String query) async {
     if (query.isEmpty) return;
-
+    
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _searchHistory.remove(query);
       _searchHistory.insert(0, query);
@@ -121,44 +64,81 @@ class _SearchScreenState extends State<SearchScreen> {
         _searchHistory = _searchHistory.sublist(0, 10);
       }
     });
-
-    // TODO: Сохранить в SharedPreferences
+    await prefs.setStringList('search_history', _searchHistory);
   }
 
-  void _clearSearchHistory() {
+  void _clearSearchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _searchHistory.clear();
     });
-    // TODO: Очистить SharedPreferences
+    await prefs.remove('search_history');
   }
 
-  void _removeFromHistory(String query) {
+  void _removeFromHistory(String query) async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _searchHistory.remove(query);
     });
-    // TODO: Обновить SharedPreferences
+    await prefs.setStringList('search_history', _searchHistory);
   }
 
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase().trim();
+  Future<void> _performSearch(String query) async {
+    if (query.trim().isEmpty) return;
 
-    setState(() {
-      _isSearching = query.isNotEmpty;
-
-      if (query.isEmpty) {
-        _filteredProducts = [];
-      } else {
-        _filteredProducts = _allProducts.where((product) {
-          return product.name.toLowerCase().contains(query);
-        }).toList();
-      }
-    });
-  }
-
-  void _performSearch(String query) {
     _searchController.text = query;
     _saveSearchHistory(query);
     _focusNode.unfocus();
+
+    setState(() {
+      _isSearching = true;
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final apiService = ApiService();
+      final response = await apiService.searchProducts(query: query);
+      
+      setState(() {
+        _searchResults = response['results'] ?? [];
+        _resultCount = response['count'] ?? 0;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+        _searchResults = [];
+      });
+    }
+  }
+
+  // Добавление товара в корзину (как в catalog_screen.dart)
+  Future<void> _addToCart(int productId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final apiService = ApiService();
+      apiService.setToken(token);
+      
+      await apiService.addItemToCart(productId: productId, quantity: 1);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Товар добавлен в корзину'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -177,7 +157,12 @@ class _SearchScreenState extends State<SearchScreen> {
           focusNode: _focusNode,
           onClear: () {
             _searchController.clear();
+            setState(() {
+              _isSearching = false;
+              _searchResults = [];
+            });
           },
+          onSubmitted: _performSearch,
         ),
       ),
       body: _isSearching ? _buildSearchResults() : _buildSearchSuggestions(),
@@ -209,7 +194,6 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 24),
         ],
-
         // История поиска
         if (_searchHistory.isNotEmpty) ...[
           Row(
@@ -242,7 +226,42 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    if (_filteredProducts.isEmpty) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 80, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Ошибка при поиске',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _performSearch(_searchController.text),
+              child: const Text('Повторить'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_searchResults.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -273,7 +292,7 @@ class _SearchScreenState extends State<SearchScreen> {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Найдено ${_filteredProducts.length} ${_getProductWord(_filteredProducts.length)}',
+            'Найдено $_resultCount ${_getProductWord(_resultCount)}',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -283,36 +302,28 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 0.5,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-            itemCount: _filteredProducts.length,
+            itemCount: _searchResults.length,
             itemBuilder: (context, index) {
-              final product = _filteredProducts[index];
-              final quantity = _cart[product.id] ?? 0;
+              final product = _searchResults[index];
               return ProductCard(
-                id: product.id,
+                id: product.id.toString(),
                 title: product.name,
-                price: product.price,
+                price: product.price.toInt(),
                 weight: '${product.weight}г',
                 imageUrl: product.image,
                 hasDiscount: product.hasDiscount,
-                isInCart: quantity > 0,
-                count: quantity,
                 onAddToCart: () => _addToCart(product.id),
-                onIncrement: () => _addToCart(product.id),
-                onDecrement: () => _removeFromCart(product.id),
-                onFavoriteToggle: () {},
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ProductDetailScreen(product: product),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Детали продукта пока не реализованы'),
                     ),
                   );
                 },

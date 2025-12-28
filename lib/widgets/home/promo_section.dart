@@ -20,16 +20,6 @@ class _PromoSectionState extends State<PromoSection> {
     });
   }
 
-  void _removeFromCart(String productId) {
-    setState(() {
-      if (_cart[productId] != null && _cart[productId]! > 0) {
-        _cart[productId] = _cart[productId]! - 1;
-        if (_cart[productId] == 0) {
-          _cart.remove(productId);
-        }
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +141,6 @@ class _PromoSectionState extends State<PromoSection> {
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final product = products[index];
-                final quantity = _cart[product.id] ?? 0;
 
                 return SizedBox(
                   width: 260,
@@ -162,14 +151,7 @@ class _PromoSectionState extends State<PromoSection> {
                     weight: '${product.weight}г',
                     imageUrl: product.image,
                     hasDiscount: product.hasDiscount,
-                    isInCart: quantity > 0,
-                    count: quantity,
                     onAddToCart: () => _addToCart(product.id),
-                    onIncrement: () => _addToCart(product.id),
-                    onDecrement: () => _removeFromCart(product.id),
-                    onFavoriteToggle: () {
-                      // Добавить в избранное
-                    },
                     onTap: () {
                       Navigator.push(
                         context,

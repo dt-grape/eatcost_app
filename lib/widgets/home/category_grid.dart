@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../models/category_model.dart';
 
 class CategoryGrid extends StatelessWidget {
-  final Function(String)? onCategorySelected;
+  final Function(int)? onCategorySelected;
 
   const CategoryGrid({
     super.key,
@@ -10,25 +11,6 @@ class CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categories = [
-      {
-        'title': 'Готовая еда',
-        'image': 'assets/images/ready_food.png',
-      },
-      {
-        'title': 'Молочка',
-        'image': 'assets/images/dairy.png',
-      },
-      {
-        'title': 'Хлеб',
-        'image': 'assets/images/bread.png',
-      },
-      {
-        'title': 'Мясо',
-        'image': 'assets/images/meat.png',
-      },
-    ];
-
     return Container(
       color: const Color(0xFFFFFFFF),
       child: Padding(
@@ -42,12 +24,14 @@ class CategoryGrid extends StatelessWidget {
             mainAxisSpacing: 16,
             childAspectRatio: 1.0,
           ),
-          itemCount: categories.length,
+          itemCount: availableCategories.length,
           itemBuilder: (context, index) {
+            final category = availableCategories[index];
             return _buildCategoryCard(
               context,
-              categories[index]['title']!,
-              categories[index]['image']!,
+              category.name,
+              category.image,
+              category.id,
             );
           },
         ),
@@ -59,11 +43,12 @@ class CategoryGrid extends StatelessWidget {
     BuildContext context,
     String title,
     String imagePath,
+    int categoryId,
   ) {
     return GestureDetector(
       onTap: () {
         // Вызываем callback для переключения на каталог с категорией
-        onCategorySelected?.call(title);
+        onCategorySelected?.call(categoryId);
       },
       child: Container(
         decoration: BoxDecoration(

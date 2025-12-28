@@ -71,31 +71,138 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
   int get _discount => 0;
   int get _finalTotal => _productsTotal + _deliveryFee - _discount;
 
-  void _incrementItem(String key) {
-    // TODO: Implement increment via API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Функция увеличения количества пока не реализована')),
-    );
+  bool _isUpdating = false;
+
+  Future<void> _incrementItem(String key) async {
+    if (_isUpdating) return; // Предотвращаем множественные нажатия
+
+    final item = _cart!.items.firstWhere((i) => i.key == key);
+
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final apiService = ApiService();
+      apiService.setToken(token);
+
+      await apiService.editCartItem(key: key, quantity: item.quantity + 1);
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      final updatedCart = await apiService.getCart();
+      setState(() {
+        _cart = updatedCart;
+        _isUpdating = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isUpdating = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+      }
+      _loadCart();
+    }
   }
 
-  void _decrementItem(String key) {
-    // TODO: Implement decrement via API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Функция уменьшения количества пока не реализована')),
-    );
+  // То же самое для _decrementItem
+  Future<void> _decrementItem(String key) async {
+    if (_isUpdating) return;
+
+    final item = _cart!.items.firstWhere((i) => i.key == key);
+
+    if (item.quantity <= 1) {
+      _removeItem(key);
+      return;
+    }
+
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final apiService = ApiService();
+      apiService.setToken(token);
+
+      await apiService.editCartItem(key: key, quantity: item.quantity - 1);
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      final updatedCart = await apiService.getCart();
+      setState(() {
+        _cart = updatedCart;
+        _isUpdating = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isUpdating = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+      }
+      _loadCart();
+    }
   }
 
-  void _removeItem(String key) {
-    // TODO: Implement remove via API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Функция удаления товара пока не реализована')),
-    );
+  Future<void> _removeItem(String key) async {
+    // Оптимистичное обновление UI
+    final removedItem = _cart!.items.firstWhere((i) => i.key == key);
+
+    setState(() {
+      final updatedItems = _cart!.items.where((i) => i.key != key).toList();
+
+      _cart = Cart(
+        items: updatedItems,
+        totals: _cart!.totals,
+        itemsCount: _cart!.itemsCount - removedItem.quantity,
+        needsPayment: _cart!.needsPayment,
+        needsShipping: _cart!.needsShipping,
+        shippingRates: _cart!.shippingRates,
+        paymentMethods: _cart!.paymentMethods,
+      );
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final apiService = ApiService();
+      apiService.setToken(token);
+
+      final updatedCart = await apiService.removeItemFromCart(productKey: key);
+      setState(() {
+        _cart = updatedCart;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Товар удален из корзины')),
+        );
+      }
+    } catch (e) {
+      _loadCart();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+      }
+    }
   }
 
   void _clearCart() {
     // TODO: Implement clear cart via API
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Функция очистки корзины пока не реализована')),
+      const SnackBar(
+        content: Text('Функция очистки корзины пока не реализована'),
+      ),
     );
   }
 
@@ -104,9 +211,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: const Color(0xFFF7F7F8),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -117,11 +222,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 100,
-                color: Colors.red,
-              ),
+              const Icon(Icons.error_outline, size: 100, color: Colors.red),
               const SizedBox(height: 16),
               Text(
                 'Ошибка загрузки корзины',
@@ -225,7 +326,9 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                   onCheckout: () {
                     // TODO: Update CheckoutScreen to use new CartItem model
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Оформление заказа пока не реализовано')),
+                      const SnackBar(
+                        content: Text('Оформление заказа пока не реализовано'),
+                      ),
                     );
                   },
                 ),
@@ -235,28 +338,44 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildEmptyCart() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 100,
-            color: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Корзина пуста',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
+    return RefreshIndicator(
+      onRefresh: _loadCart,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 100,
+                    color: Colors.grey.shade300,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Корзина пуста',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Добавьте товары из каталога',
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Потяните вниз для обновления',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Добавьте товары из каталога',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
           ),
         ],
       ),
