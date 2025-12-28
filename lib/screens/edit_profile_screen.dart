@@ -41,7 +41,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
 
-    _phoneController.text = authService.userPhone ?? '';
   }
 
   Future<void> _saveProfile() async {

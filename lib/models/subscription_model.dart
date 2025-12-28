@@ -14,7 +14,7 @@ class SubscriptionModel {
   });
 
   bool get isActive => status == 'active';
-  
+
   String get expiryDateFormatted {
     if (expiryDate == null) return '';
     final day = expiryDate!.day.toString().padLeft(2, '0');

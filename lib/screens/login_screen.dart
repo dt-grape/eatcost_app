@@ -10,14 +10,23 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController();
-  final _codeController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
-    if (_phoneController.text.isEmpty || _codeController.text.isEmpty) {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Заполните все поля')),
+      );
+      return;
+    }
+
+    // Простая валидация email
+    if (!_emailController.text.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите корректный email')),
       );
       return;
     }
@@ -28,9 +37,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final authService = context.read<AuthService>();
     final success = await authService.login(
-      _phoneController.text,
-      _codeController.text,
+      _emailController.text.trim(),
+      _passwordController.text,
     );
+
+    if (success) return;
+
+    if (!mounted) return;
 
     setState(() {
       _isLoading = false;
@@ -39,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!success) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Неверный код')),
+          const SnackBar(content: Text('Неверный email или пароль')),
         );
       }
     }
@@ -69,43 +82,54 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Введите номер телефона для входа',
+                'Введите email и пароль для входа',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                 ),
               ),
               const SizedBox(height: 32),
-
-              // Поле телефона
+              
+              // Поле email
               TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Номер телефона',
-                  hintText: '+7 (___) ___-__-__',
+                  labelText: 'Email',
+                  hintText: 'example@mail.com',
+                  prefixIcon: const Icon(Icons.email_outlined),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Поле кода
+              
+              // Поле пароля
               TextField(
-                controller: _codeController,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
+                controller: _passwordController,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Код из SMS',
-                  hintText: '____',
+                  labelText: 'Пароль',
+                  hintText: '••••••••',
+                  prefixIcon: const Icon(Icons.lock_outlined),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-
+              
               // Кнопка входа
               SizedBox(
                 width: double.infinity,
@@ -146,8 +170,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _codeController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 }

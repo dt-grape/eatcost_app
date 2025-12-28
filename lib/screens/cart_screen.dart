@@ -1,6 +1,7 @@
-import 'package:eatcost_app/screens/checkout_screen.dart';
 import 'package:flutter/material.dart';
-import '../models/cart_item_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/cart_model.dart';
+import '../services/api_service.dart';
 import '../widgets/cart/cart_item_card.dart';
 import '../widgets/cart/promo_code_input.dart';
 import '../widgets/cart/cart_summary.dart';
@@ -12,88 +13,146 @@ class CartScreen extends StatefulWidget {
   State<CartScreen> createState() => _CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
-  final List<CartItem> _cartItems = [
-    CartItem(
-      id: '1',
-      name: 'Курица (грудка) с картофелем по-домашнему',
-      image: 'assets/images/food.png',
-      price: 529,
-      weight: 500,
-      quantity: 1,
-    ),
-    CartItem(
-      id: '2',
-      name: 'Курица (грудка) с картофелем по-домашнему',
-      image: 'assets/images/food2.png',
-      price: 312,
-      weight: 122,
-      quantity: 1,
-    ),
-  ];
+class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
+  Cart? _cart;
+  bool _isLoading = true;
+  String? _error;
 
-  int get _totalItems => _cartItems.fold(0, (sum, item) => sum + item.quantity);
-  int get _productsTotal =>
-      _cartItems.fold(0, (sum, item) => sum + item.totalPrice);
-  int get _deliveryFee => 457;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadCart();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Приложение вернулось в фокус - обновляем корзину
+      _loadCart();
+    }
+  }
+
+  Future<void> _loadCart() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final apiService = ApiService();
+      apiService.setToken(token);
+      final cart = await apiService.getCart();
+
+      setState(() {
+        _cart = cart;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  int get _totalItems => _cart?.itemsCount ?? 0;
+  int get _productsTotal => int.tryParse(_cart?.totals.totalPrice ?? '0') ?? 0;
+  int get _deliveryFee => 457; // Пока жестко закодировано
   int get _discount => 0;
   int get _finalTotal => _productsTotal + _deliveryFee - _discount;
 
-  void _incrementItem(String id) {
-    setState(() {
-      final item = _cartItems.firstWhere((item) => item.id == id);
-      item.quantity++;
-    });
+  void _incrementItem(String key) {
+    // TODO: Implement increment via API
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Функция увеличения количества пока не реализована')),
+    );
   }
 
-  void _decrementItem(String id) {
-    setState(() {
-      final item = _cartItems.firstWhere((item) => item.id == id);
-      if (item.quantity > 1) {
-        item.quantity--;
-      }
-    });
+  void _decrementItem(String key) {
+    // TODO: Implement decrement via API
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Функция уменьшения количества пока не реализована')),
+    );
   }
 
-  void _removeItem(String id) {
-    setState(() {
-      _cartItems.removeWhere((item) => item.id == id);
-    });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Товар удален из корзины')));
+  void _removeItem(String key) {
+    // TODO: Implement remove via API
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Функция удаления товара пока не реализована')),
+    );
   }
 
   void _clearCart() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Очистить корзину?'),
-        content: const Text('Все товары будут удалены из корзины'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _cartItems.clear();
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Очистить', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    // TODO: Implement clear cart via API
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Функция очистки корзины пока не реализована')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF7F7F8),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF7F7F8),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 100,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Ошибка загрузки корзины',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadCart,
+                child: const Text('Повторить'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final cartItems = _cart?.items ?? [];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F8),
-      body: _cartItems.isEmpty
+      body: cartItems.isEmpty
           ? _buildEmptyCart()
           : Column(
               children: [
@@ -110,7 +169,7 @@ class _CartScreenState extends State<CartScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (_cartItems.isNotEmpty)
+                      if (cartItems.isNotEmpty)
                         TextButton.icon(
                           onPressed: _clearCart,
                           icon: const Icon(Icons.delete_outline, size: 20),
@@ -124,21 +183,24 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 // Список товаров
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _cartItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _cartItems[index];
-                      return CartItemCard(
-                        item: item,
-                        onIncrement: () => _incrementItem(item.id),
-                        onDecrement: () => _decrementItem(item.id),
-                        onRemove: () => _removeItem(item.id),
-                        onFavorite: () {
-                          // Добавить в избранное
-                        },
-                      );
-                    },
+                  child: RefreshIndicator(
+                    onRefresh: _loadCart,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: cartItems.length,
+                      itemBuilder: (context, index) {
+                        final item = cartItems[index];
+                        return CartItemCard(
+                          item: item,
+                          onIncrement: () => _incrementItem(item.key),
+                          onDecrement: () => _decrementItem(item.key),
+                          onRemove: () => _removeItem(item.key),
+                          onFavorite: () {
+                            // Добавить в избранное
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
 
@@ -161,16 +223,9 @@ class _CartScreenState extends State<CartScreen> {
                   finalTotal: _finalTotal,
                   minimumOrderText: 'Минимальный заказ от 1529 ₽',
                   onCheckout: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CheckoutScreen(
-                          cartItems: _cartItems,
-                          productsTotal: _productsTotal,
-                          deliveryFee: _deliveryFee,
-                          discount: _discount,
-                        ),
-                      ),
+                    // TODO: Update CheckoutScreen to use new CartItem model
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Оформление заказа пока не реализовано')),
                     );
                   },
                 ),

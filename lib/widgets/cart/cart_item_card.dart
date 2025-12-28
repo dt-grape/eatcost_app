@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/cart_item_model.dart';
+import '../../models/cart_model.dart';
 
 class CartItemCard extends StatelessWidget {
   final CartItem item;
@@ -43,15 +43,21 @@ class CartItemCard extends StatelessWidget {
               width: 80,
               height: 80,
               color: Colors.grey.shade200,
-              child: Image.asset(
-                item.image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.fastfood,
-                  size: 40,
-                  color: Colors.grey.shade400,
-                ),
-              ),
+              child: item.image != null
+                  ? Image.network(
+                      item.image!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.fastfood,
+                        size: 40,
+                        color: Colors.grey.shade400,
+                      ),
+                    )
+                  : Icon(
+                      Icons.fastfood,
+                      size: 40,
+                      color: Colors.grey.shade400,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -110,14 +116,15 @@ class CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // Вес
-                Text(
-                  '${item.weight}г',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
+                // SKU
+                if (item.sku.isNotEmpty)
+                  Text(
+                    'Арт: ${item.sku}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 12),
 
                 // Счетчик и цена
@@ -166,7 +173,7 @@ class CartItemCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '${item.totalPrice} ₽',
+                          '${item.lineTotal} ₽',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
