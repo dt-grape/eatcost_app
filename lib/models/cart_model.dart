@@ -28,7 +28,12 @@ class CartItem {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
-
+    // Конвертируем цены из копеек в рубли (делим на 100)
+    String _convertPrice(String priceString) {
+      final priceInKopeks = int.tryParse(priceString) ?? 0;
+      final priceInRubles = priceInKopeks / 100;
+      return priceInRubles.toStringAsFixed(2);
+    }
 
     return CartItem(
       key: json['key'],
@@ -39,10 +44,10 @@ class CartItem {
       sku: json['sku'] ?? '',
       permalink: json['permalink'],
       image: json['image'],
-      price: json['price'] ?? '0',
-      regularPrice: json['regular_price'] ?? '0',
-      salePrice: json['sale_price'] ?? '0',
-      lineTotal: json['line_total'] ?? '0',
+      price: _convertPrice(json['price'] ?? '0'),
+      regularPrice: _convertPrice(json['regular_price'] ?? '0'),
+      salePrice: _convertPrice(json['sale_price'] ?? '0'),
+      lineTotal: _convertPrice(json['line_total'] ?? '0'),
     );
   }
 }
@@ -63,9 +68,16 @@ class CartTotals {
   });
 
   factory CartTotals.fromJson(Map<String, dynamic> json) {
+    // Конвертируем цены из копеек в рубли (делим на 100)
+    String _convertPrice(String priceString) {
+      final priceInKopeks = int.tryParse(priceString) ?? 0;
+      final priceInRubles = priceInKopeks / 100;
+      return priceInRubles.toStringAsFixed(2);
+    }
+
     return CartTotals(
-      totalItems: json['total_items'],
-      totalPrice: json['total_price'],
+      totalItems: _convertPrice(json['total_items']),
+      totalPrice: _convertPrice(json['total_price']),
       currencyCode: json['currency_code'],
       currencySymbol: json['currency_symbol'],
       currencySuffix: json['currency_suffix'],

@@ -111,7 +111,7 @@ class AppDrawer extends StatelessWidget {
                           ),
                           SizedBox(width: 12),
                           Text(
-                            '8 (343) 344-23-56',
+                            '+7 (933) 194-62-80',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,

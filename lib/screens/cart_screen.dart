@@ -66,10 +66,10 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
   }
 
   int get _totalItems => _cart?.itemsCount ?? 0;
-  int get _productsTotal => int.tryParse(_cart?.totals.totalPrice ?? '0') ?? 0;
-  int get _deliveryFee => 457; // Пока жестко закодировано
-  int get _discount => 0;
-  int get _finalTotal => _productsTotal + _deliveryFee - _discount;
+  double get _productsTotal => double.tryParse(_cart?.totals.totalPrice ?? '0') ?? 0.0;
+  double get _deliveryFee => 457.0; // Пока жестко закодировано
+  double get _discount => 0.0;
+  double get _finalTotal => _productsTotal + _deliveryFee - _discount;
 
   bool _isUpdating = false;
 
@@ -290,10 +290,10 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 // Итоговая сводка
                 CartSummary(
                   totalItems: _totalItems,
-                  productsTotal: _productsTotal,
-                  deliveryFee: _deliveryFee,
-                  discount: _discount,
-                  finalTotal: _finalTotal,
+                  productsTotal: _productsTotal.round(),
+                  deliveryFee: _deliveryFee.round(),
+                  discount: _discount.round(),
+                  finalTotal: _finalTotal.round(),
                   minimumOrderText: 'Минимальный заказ от 1529 ₽',
                   onCheckout: () {
                     // TODO: Update CheckoutScreen to use new CartItem model

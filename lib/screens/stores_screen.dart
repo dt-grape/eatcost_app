@@ -17,9 +17,9 @@ class _StoresScreenState extends State<StoresScreen> {
     Store(
       id: '1',
       name: 'г. Новосибирск',
-      address: 'ул. Амурская, д.27',
+      address: 'ул. Шоссейная, 52/1',
       workingHours: 'Ежедневно с 9:00 до 23:00',
-      phone: '+7 (965) 375-29-85',
+      phone: '+7 (933) 194-62-80',
       latitude: 55.0415,
       longitude: 82.9346,
     ),
