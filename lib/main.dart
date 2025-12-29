@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             fontFamily: 'FFGoodPro',
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2C4C3B),
+              seedColor: const Color(0xFFEAEEEB),
             ),
           ),
           home: const AuthWrapper(),

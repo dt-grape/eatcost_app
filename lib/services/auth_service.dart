@@ -22,14 +22,18 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     _token = prefs.getString('token');
-    
+
     apiService.setToken(_token);
-    
+    // Устанавливаем callback для обработки ошибок авторизации
+    apiService.setOnAuthError(() {
+      logout();
+    });
+
     // Если авторизован, загружаем профиль
     if (_isLoggedIn && _token != null) {
       await loadUserProfile();
     }
-    
+
     notifyListeners();
   }
 
@@ -42,10 +46,10 @@ class AuthService extends ChangeNotifier {
 
       _token = response['jwt'];
       apiService.setToken(_token);
-      
+
       // Загружаем профиль пользователя
       await loadUserProfile();
-      
+
       _isLoggedIn = true;
 
       // Сохраняем в локальное хранилище
@@ -57,6 +61,35 @@ class AuthService extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('Login error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> register(String email, String password, String username) async {
+    try {
+      final response = await apiService.register(
+        email: email,
+        password: password,
+        username: username,
+      );
+
+      _token = response['jwt'];
+      apiService.setToken(_token);
+
+      // Загружаем профиль пользователя
+      await loadUserProfile();
+
+      _isLoggedIn = true;
+
+      // Сохраняем в локальное хранилище
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('token', _token!);
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Register error: $e');
       return false;
     }
   }

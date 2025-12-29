@@ -6,6 +6,7 @@ import 'package:eatcost_app/widgets/app/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'cart_screen.dart';
+import '../models/category_model.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,7 +17,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-  int? _selectedCategoryId;
+  Category? _selectedCategory;
 
   // Ключи для управления состоянием экранов
   final GlobalKey<CatalogScreenState> _catalogKey = GlobalKey<CatalogScreenState>();
@@ -27,15 +28,17 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void navigateToCatalogWithCategory(int categoryId) {
+  void navigateToCatalogWithCategory(Category category) {
     setState(() {
       _selectedIndex = 1; // Индекс CatalogScreen
-      _selectedCategoryId = categoryId;
+      _selectedCategory = category;
     });
 
     // Применяем категорию после перехода
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _catalogKey.currentState?.setCategoryId(categoryId);
+      if (_selectedCategory != null) {
+        _catalogKey.currentState?.setCategory(_selectedCategory!);
+      }
     });
   }
 
@@ -76,7 +79,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
           CatalogScreen(
             key: _catalogKey,
-            initialCategoryId: _selectedCategoryId,
+            initialCategory: _selectedCategory,
           ),
           const CartScreen(),
           const ProfileScreen(),

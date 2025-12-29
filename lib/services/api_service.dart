@@ -5,6 +5,7 @@ import '../models/post_model.dart';
 import '../models/user_model.dart';
 import '../models/cart_model.dart';
 import '../models/product_api_model.dart';
+import '../models/category_model.dart';
 
 class ApiService {
   static const String baseUrl = 'https://eatcost.ru/wp-json/wp/v2';
@@ -12,9 +13,14 @@ class ApiService {
 
   String? _token;
   bool _isRefreshing = false;
+  Function? _onAuthError;
 
   void setToken(String? token) {
     _token = token;
+  }
+
+  void setOnAuthError(Function onAuthError) {
+    _onAuthError = onAuthError;
   }
 
   Map<String, String> _getHeaders({bool withAuth = false}) {
@@ -69,6 +75,15 @@ class ApiService {
       } finally {
         _isRefreshing = false;
       }
+
+      // Если обновление токена не удалось, очищаем токен и данные авторизации
+      _token = null;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+      await prefs.setBool('isLoggedIn', false);
+
+      // Вызываем callback для обработки ошибки авторизации
+      _onAuthError?.call();
     }
 
     return response;
@@ -94,6 +109,39 @@ class ApiService {
         throw Exception('Неверный email или пароль');
       } else {
         throw Exception('Ошибка авторизации: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ошибка подключения: $e');
+    }
+  }
+
+  // РЕГИСТРАЦИЯ
+  Future<Map<String, dynamic>> register({
+    required String email,
+    required String password,
+    required String username,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$backendUrl/auth/register'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'username': username,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        _token = data['jwt'];
+        return data;
+      } else if (response.statusCode == 400) {
+        throw Exception('Пользователь с таким email уже существует');
+      } else if (response.statusCode == 422) {
+        throw Exception('Некорректные данные');
+      } else {
+        throw Exception('Ошибка регистрации: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Ошибка подключения: $e');
@@ -339,28 +387,46 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> searchProducts({required String query}) async {
-  final uri = Uri.parse('$backendUrl/products/search').replace(
-    queryParameters: {'query': query},
-  );
-  
-  final response = await http.get(
-    uri,
-    headers: {'Content-Type': 'application/json'},
-  );
+    final uri = Uri.parse(
+      '$backendUrl/products/search',
+    ).replace(queryParameters: {'query': query});
 
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    
-    return {
-      'query': data['query'],
-      'count': data['count'],
-      'results': (data['results'] as List)
-          .map((item) => Product.fromJson(item))
-          .toList(),
-    };
-  } else {
-    throw Exception('Ошибка поиска товаров: ${response.statusCode}');
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      return {
+        'query': data['query'],
+        'count': data['count'],
+        'results': (data['results'] as List)
+            .map((item) => Product.fromJson(item))
+            .toList(),
+      };
+    } else {
+      throw Exception('Ошибка поиска товаров: ${response.statusCode}');
+    }
   }
-}
 
+  // ПОЛУЧЕНИЕ КАТЕГОРИЙ
+  Future<List<Category>> getCategories({int parentCategoryId = 0}) async {
+    try {
+      final uri = Uri.parse('$backendUrl/products/category').replace(
+        queryParameters: {'parent_category_id': parentCategoryId.toString()},
+      );
+      final response = await http.get(uri, headers: _getHeaders());
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List;
+        return data.map((item) => Category.fromJson(item)).toList();
+      } else {
+        throw Exception('Ошибка загрузки категорий: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ошибка: $e');
+    }
+  }
 }

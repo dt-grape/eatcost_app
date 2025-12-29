@@ -257,31 +257,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           ? _buildEmptyCart()
           : Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Корзина',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (cartItems.isNotEmpty)
-                        TextButton.icon(
-                          onPressed: _clearCart,
-                          icon: const Icon(Icons.delete_outline, size: 20),
-                          label: const Text('Очистить'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey.shade700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
                 // Список товаров
                 Expanded(
                   child: RefreshIndicator(
@@ -296,9 +271,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                           onIncrement: () => _incrementItem(item.key),
                           onDecrement: () => _decrementItem(item.key),
                           onRemove: () => _removeItem(item.key),
-                          onFavorite: () {
-                            // Добавить в избранное
-                          },
                         );
                       },
                     ),

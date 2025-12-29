@@ -105,7 +105,7 @@ class ProductCategoryInfo {
 class ProductAttribute {
   final int id;
   final String name;
-  final String taxonomy;
+  final String? taxonomy;
   final bool hasVariations;
   final List<ProductAttributeTerm> terms;
 

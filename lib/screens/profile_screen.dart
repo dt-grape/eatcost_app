@@ -6,7 +6,7 @@ import '../services/auth_service.dart';
 import '../widgets/profile/profile_header.dart';
 import '../widgets/profile/profile_menu_item.dart';
 import '../widgets/profile/subscription_banner.dart';
-import 'order_history_screen.dart';
+//import 'order_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -82,18 +82,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     // История заказов
-                    ProfileMenuItem(
-                      icon: Icons.shopping_bag_outlined,
-                      title: 'История заказов',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const OrderHistoryScreen(),
-                          ),
-                        );
-                      },
-                    ),
+                    // ProfileMenuItem(
+                    //   icon: Icons.shopping_bag_outlined,
+                    //   title: 'История заказов',
+                    //   onTap: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (context) => const OrderHistoryScreen(),
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
 
                     // Баннер подписки (всегда используем SubscriptionBanner)
                     SubscriptionBanner(

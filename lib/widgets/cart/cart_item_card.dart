@@ -6,7 +6,6 @@ class CartItemCard extends StatelessWidget {
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
   final VoidCallback onRemove;
-  final VoidCallback onFavorite;
 
   const CartItemCard({
     super.key,
@@ -14,7 +13,6 @@ class CartItemCard extends StatelessWidget {
     required this.onIncrement,
     required this.onDecrement,
     required this.onRemove,
-    required this.onFavorite,
   });
 
   @override
@@ -86,18 +84,7 @@ class CartItemCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Row(
                       children: [
-                        // Кнопка избранного
-                        GestureDetector(
-                          onTap: onFavorite,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.favorite_border,
-                              size: 20,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ),
+
                         // Кнопка удаления
                         GestureDetector(
                           onTap: onRemove,

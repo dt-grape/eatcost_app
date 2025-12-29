@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class PromoCarousel extends StatefulWidget {
-  const PromoCarousel({super.key});
+  final VoidCallback? onTryPressed;
+
+  const PromoCarousel({super.key, this.onTryPressed});
 
   @override
   State<PromoCarousel> createState() => _PromoCarouselState();
@@ -138,7 +140,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: widget.onTryPressed,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B9E6B),
                     foregroundColor: Colors.white,

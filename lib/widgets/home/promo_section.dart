@@ -4,7 +4,9 @@ import '../catalog/product_card.dart';
 import '../../models/product_model.dart';
 
 class PromoSection extends StatefulWidget {
-  const PromoSection({super.key});
+  final VoidCallback? onSeeAllPressed;
+
+  const PromoSection({super.key, this.onSeeAllPressed});
 
   @override
   State<PromoSection> createState() => _PromoSectionState();
@@ -103,7 +105,7 @@ class _PromoSectionState extends State<PromoSection> {
                 ),
                 // Кнопка "Смотреть все"
                 TextButton(
-                  onPressed: () {},
+                  onPressed: widget.onSeeAllPressed,
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF2C4C3B),

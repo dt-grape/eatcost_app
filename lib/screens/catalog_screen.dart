@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../widgets/catalog/catalog_header.dart';
-import '../widgets/catalog/category_tabs.dart';
 import '../widgets/catalog/product_card.dart';
 import '../widgets/catalog/filter_drawer.dart';
 import '../models/product_api_model.dart';
@@ -9,9 +7,9 @@ import '../models/category_model.dart';
 import '../services/api_service.dart';
 
 class CatalogScreen extends StatefulWidget {
-  final int? initialCategoryId;
+  final Category? initialCategory;
 
-  const CatalogScreen({super.key, this.initialCategoryId});
+  const CatalogScreen({super.key, this.initialCategory});
 
   @override
   State<CatalogScreen> createState() => CatalogScreenState();
@@ -19,39 +17,43 @@ class CatalogScreen extends StatefulWidget {
 
 class CatalogScreenState extends State<CatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  late String _selectedCategory;
-  late int _selectedCategoryId;
   String _sortBy = 'По популярности';
 
+  List<Category> _categoryPath = [];
+  List<Category> _subcategories = [];
   List<ProductCategory> _productCategories = [];
   bool _isLoading = true;
   String? _error;
+  bool _showingProducts = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedCategory = 'Каталог'; // Пока не используется
-    _selectedCategoryId =
-        widget.initialCategoryId ?? 340; // Выпечка по умолчанию
-    _loadProducts();
+    final initialCategory = widget.initialCategory;
+    if (initialCategory != null) {
+      setState(() {
+        _categoryPath = [initialCategory];
+      });
+      _navigateToCategory(initialCategory.id);
+    } else {
+      _loadInitial();
+    }
   }
 
-  // Публичный метод для изменения категории извне
-  void setCategory(String category) {
+  Future<void> _loadInitial() async {
+    // If no initial category, show all parent categories
+    await _loadSubcategories(0);
+  }
+
+  // Новый метод для установки category
+  void setCategory(Category category) {
     setState(() {
-      _selectedCategory = category;
+      _categoryPath = [category];
     });
+    _navigateToCategory(category.id);
   }
 
-  // Новый метод для установки categoryId
-  void setCategoryId(int categoryId) {
-    setState(() {
-      _selectedCategoryId = categoryId;
-    });
-    _loadProducts(); // Перезагружаем продукты при смене категории
-  }
-
-  Future<void> _loadProducts() async {
+  Future<void> _navigateToCategory(int categoryId) async {
     try {
       setState(() {
         _isLoading = true;
@@ -59,12 +61,63 @@ class CatalogScreenState extends State<CatalogScreen> {
       });
 
       final apiService = ApiService();
-      final categories = await apiService.getProducts(
-        categoryId: _selectedCategoryId,
-      );
+      final subcategories = await apiService.getCategories(parentCategoryId: categoryId);
+
+      if (subcategories.isNotEmpty) {
+        // Has subcategories, show them
+        setState(() {
+          _subcategories = subcategories;
+          _showingProducts = false;
+          _isLoading = false;
+        });
+      } else {
+        // No subcategories, load products
+        await _loadProducts(categoryId);
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadSubcategories(int parentCategoryId) async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final apiService = ApiService();
+      final subcategories = await apiService.getCategories(parentCategoryId: parentCategoryId);
+
+      setState(() {
+        _subcategories = subcategories;
+        _showingProducts = false;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadProducts(int categoryId) async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final apiService = ApiService();
+      final categories = await apiService.getProducts(categoryId: categoryId);
 
       setState(() {
         _productCategories = categories;
+        _showingProducts = true;
         _isLoading = false;
       });
     } catch (e) {
@@ -77,44 +130,63 @@ class CatalogScreenState extends State<CatalogScreen> {
 
   // НОВЫЙ МЕТОД: Обновление без показа индикатора загрузки
   Future<void> _refreshProducts() async {
-    try {
-      final apiService = ApiService();
-      final categories = await apiService.getProducts(
-        categoryId: _selectedCategoryId,
-      );
+    if (_showingProducts && _categoryPath.isNotEmpty) {
+      final currentCategoryId = _categoryPath.last.id;
+      try {
+        final apiService = ApiService();
+        final categories = await apiService.getProducts(categoryId: currentCategoryId);
 
-      setState(() {
-        _productCategories = categories;
-        _error = null;
-      });
-    } catch (e) {
-      // При ошибке обновления показываем снэкбар, но не меняем состояние загрузки
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка обновления: ${e.toString()}'),
-            action: SnackBarAction(
-              label: 'Повторить',
-              onPressed: _refreshProducts,
+        setState(() {
+          _productCategories = categories;
+          _error = null;
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ошибка обновления: ${e.toString()}'),
+              action: SnackBarAction(
+                label: 'Повторить',
+                onPressed: _refreshProducts,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     }
   }
 
   List<Product> get _products {
-    // Объединяем все продукты из всех категорий
     return _productCategories.expand((category) => category.items).toList();
   }
 
   String _getCategoryTitle() {
-    final category = availableCategories.firstWhere(
-      (cat) => cat.id == _selectedCategoryId,
-      orElse: () =>
-          Category(id: _selectedCategoryId, name: 'Каталог', image: ''),
-    );
-    return category.name;
+    if (_categoryPath.isEmpty) return 'Каталог';
+    return _categoryPath.last.name;
+  }
+
+  bool get _canGoBack => _categoryPath.isNotEmpty;
+
+  void _goBack() {
+    if (_categoryPath.isNotEmpty) {
+      setState(() {
+        _categoryPath.removeLast();
+      });
+      if (_categoryPath.isEmpty) {
+        _loadInitial();
+      } else {
+        final parentId = _categoryPath.last.id;
+        _loadSubcategories(parentId);
+      }
+    }
+  }
+
+  void _onSubcategorySelected(int categoryId, String categoryName) {
+    final category = Category(id: categoryId, name: categoryName, image: '');
+    setState(() {
+      _categoryPath.add(category);
+    });
+    _navigateToCategory(categoryId);
   }
 
   void _openFilters() {
@@ -140,9 +212,9 @@ class CatalogScreenState extends State<CatalogScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: ${e.toString()}')),
+        );
       }
     }
   }
@@ -153,6 +225,18 @@ class CatalogScreenState extends State<CatalogScreen> {
       return Scaffold(
         key: _scaffoldKey,
         backgroundColor: const Color(0xFFF7F7F8),
+        appBar: AppBar(
+          leading: _canGoBack
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _goBack,
+                )
+              : null,
+          title: Text(_getCategoryTitle()),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -161,6 +245,18 @@ class CatalogScreenState extends State<CatalogScreen> {
       return Scaffold(
         key: _scaffoldKey,
         backgroundColor: const Color(0xFFF7F7F8),
+        appBar: AppBar(
+          leading: _canGoBack
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _goBack,
+                )
+              : null,
+          title: Text(_getCategoryTitle()),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -168,7 +264,7 @@ class CatalogScreenState extends State<CatalogScreen> {
               const Icon(Icons.error_outline, size: 100, color: Colors.red),
               const SizedBox(height: 16),
               Text(
-                'Ошибка загрузки продуктов',
+                'Ошибка загрузки',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -183,7 +279,14 @@ class CatalogScreenState extends State<CatalogScreen> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _loadProducts,
+                onPressed: () {
+                  if (_showingProducts && _categoryPath.isNotEmpty) {
+                    _loadProducts(_categoryPath.last.id);
+                  } else {
+                    final parentId = _categoryPath.isNotEmpty ? _categoryPath.last.id : 0;
+                    _loadSubcategories(parentId);
+                  }
+                },
                 child: const Text('Повторить'),
               ),
             ],
@@ -195,123 +298,165 @@ class CatalogScreenState extends State<CatalogScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF7F7F8),
-      body: RefreshIndicator(
-        onRefresh: _refreshProducts,
-        child: CustomScrollView(
-          slivers: [
-            // Заголовок с кнопками
-            SliverToBoxAdapter(
-              child: CatalogHeader(
-                title: _getCategoryTitle(),
-                itemCount: _products
-                    .length, // Обновлено: показываем реальное количество
-                sortBy: _sortBy,
-                onFilterTap: _openFilters,
-                onSortChanged: (value) {
-                  setState(() {
-                    _sortBy = value;
-                  });
-                },
-              ),
-            ),
-
-            // Табы категорий
-            SliverToBoxAdapter(
-              child: CategoryTabs(
-                categories: const [
-                  'Готовая еда',
-                  'Молочка',
-                  'Хлеб',
-                  'Мясо',
-                  'Пельмени и вареники',
-                  'Рыба и полуфабрикаты',
-                ],
-                selectedCategory: _selectedCategory,
-                onCategoryChanged: (category) {
-                  setState(() {
-                    _selectedCategory = category;
-                  });
-                },
-              ),
-            ),
-
-            // ОБНОВЛЕНО: Проверка на пустой список продуктов
-            if (_products.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.inventory_2_outlined,
-                        size: 100,
-                        color: Colors.grey.shade300,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Нет товаров',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Потяните вниз для обновления',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      appBar: AppBar(
+        leading: _canGoBack
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _goBack,
               )
-            else
-              // Сетка продуктов
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.5,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final product = _products[index];
-                    return ProductCard(
-                      id: product.id.toString(),
-                      title: product.name,
-                      price: product.price.toInt(),
-                      weight: '${product.weight}г',
-                      imageUrl: product.image,
-                      hasDiscount: product.hasDiscount,
-                      onAddToCart: () => _addToCart(product.id),
-                      onTap: () {
-                        // TODO: Update ProductDetailScreen to use new Product model
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Детали продукта пока не реализованы',
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  }, childCount: _products.length),
-                ),
-              ),
-          ],
-        ),
+            : null,
+        title: Text(_getCategoryTitle()),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        actions: _showingProducts ? [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _openFilters,
+          ),
+        ] : null,
       ),
-      endDrawer: FilterDrawer(
+      body: _showingProducts ? _buildProductsView() : _buildCategoriesView(),
+      endDrawer: _showingProducts ? FilterDrawer(
         onApplyFilters: (filters) {
           // Обработка выбранных фильтров
           Navigator.pop(context);
         },
+      ) : null,
+    );
+  }
+
+  Widget _buildCategoriesView() {
+    return RefreshIndicator(
+      onRefresh: () async {
+        final parentId = _categoryPath.isNotEmpty ? _categoryPath.last.id : 0;
+        await _loadSubcategories(parentId);
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _subcategories.length,
+        itemBuilder: (context, index) {
+          final category = _subcategories[index];
+          return Card(
+            color: const Color(0xFFEAEEEB),
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: category.image.isNotEmpty
+                  ? Image.network(category.image, width: 50, height: 50, fit: BoxFit.cover)
+                  : const Icon(Icons.fastfood, size: 50),
+              title: Text(category.name),
+              onTap: () => _onSubcategorySelected(category.id, category.name),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProductsView() {
+    return RefreshIndicator(
+      onRefresh: _refreshProducts,
+      child: CustomScrollView(
+        slivers: [
+          // Заголовок с кнопками
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Text(
+                    '${_products.length} товаров',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const Spacer(),
+                  DropdownButton<String>(
+                    value: _sortBy,
+                    items: const [
+                      DropdownMenuItem(value: 'По популярности', child: Text('По популярности')),
+                      DropdownMenuItem(value: 'По цене', child: Text('По цене')),
+                      DropdownMenuItem(value: 'По названию', child: Text('По названию')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _sortBy = value;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          if (_products.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.inventory_2_outlined,
+                      size: 100,
+                      color: Colors.grey.shade300,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Нет товаров',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Потяните вниз для обновления',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.5,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final product = _products[index];
+                  return ProductCard(
+                    id: product.id.toString(),
+                    title: product.name,
+                    price: product.price.toInt(),
+                    weight: '${product.weight}г',
+                    imageUrl: product.image,
+                    hasDiscount: product.hasDiscount,
+                    onAddToCart: () => _addToCart(product.id),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Детали продукта пока не реализованы'),
+                        ),
+                      );
+                    },
+                  );
+                }, childCount: _products.length),
+              ),
+            ),
+        ],
       ),
     );
   }

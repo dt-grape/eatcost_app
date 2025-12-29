@@ -23,15 +23,6 @@ class _StoresScreenState extends State<StoresScreen> {
       latitude: 55.0415,
       longitude: 82.9346,
     ),
-    Store(
-      id: '2',
-      name: 'г. Новосибирск',
-      address: 'ул. Революционная, 153',
-      workingHours: 'Ежедневно с 9:00 до 23:00',
-      phone: '+7 (965) 375-29-85',
-      latitude: 55.0404,
-      longitude: 82.9267,
-    ),
   ];
 
   void _selectStore(Store store) {
