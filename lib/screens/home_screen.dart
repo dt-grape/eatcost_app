@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/home/promo_carousel.dart';
 import '../widgets/home/service_cards.dart';
 import '../widgets/home/category_grid.dart';
+import '../widgets/home/membership_card.dart';
 import '../models/category_model.dart';
 import '../screens/catalog_screen.dart';
 
@@ -27,6 +28,7 @@ class HomeScreen extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
+          const MembershipCard(),
           SizedBox(height: 16),
           PromoCarousel(
             onTryPressed: () => _navigateToCatalog(context),

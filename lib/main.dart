@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
+import 'providers/cart_provider.dart';
 import 'screens/main_screen.dart';
 import 'screens/login_screen.dart';
 
@@ -13,21 +14,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthService(),
-      // Используем builder чтобы получить context с доступом к Provider
-      builder: (context, child) {
-        return MaterialApp(
-          title: 'EatCost',
-          theme: ThemeData(
-            fontFamily: 'FFGoodPro',
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFEAEEEB),
-            ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
+      child: MaterialApp(
+        title: 'EatCost',
+        theme: ThemeData(
+          fontFamily: 'FFGoodPro',
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFEAEEEB),
           ),
-          home: const AuthWrapper(),
-        );
-      },
+        ),
+        home: const AuthWrapper(),
+      ),
     );
   }
 }
@@ -98,9 +99,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // После проверки показываем нужный экран
     return Consumer<AuthService>(
       builder: (context, authService, child) {
-        return authService.isLoggedIn
-            ? const MainScreen()
-            : const LoginScreen();
+        if (authService.isLoggedIn) {
+          return const MainScreen();
+        } else {
+          return const LoginScreen();
+        }
       },
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product_api_model.dart';
+import '../providers/cart_provider.dart';
 import '../widgets/catalog/product_card.dart';
 import '../widgets/search/search_bar_widget.dart';
 import '../widgets/search/search_history_item.dart';
@@ -114,16 +116,11 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  // Добавление товара в корзину (как в catalog_screen.dart)
+  // Добавление товара в корзину
   Future<void> _addToCart(int productId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      final apiService = ApiService();
-      apiService.setToken(token);
-      
-      await apiService.addItemToCart(productId: productId, quantity: 1);
-      
+      await context.read<CartProvider>().addItem(productId, 1);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

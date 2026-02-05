@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/catalog/product_card.dart';
 import '../widgets/catalog/filter_drawer.dart';
 import '../models/product_api_model.dart';
 import '../models/category_model.dart';
+import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -61,7 +63,9 @@ class CatalogScreenState extends State<CatalogScreen> {
       });
 
       final apiService = ApiService();
-      final subcategories = await apiService.getCategories(parentCategoryId: categoryId);
+      final subcategories = await apiService.getCategories(
+        parentCategoryId: categoryId,
+      );
 
       if (subcategories.isNotEmpty) {
         // Has subcategories, show them
@@ -90,7 +94,9 @@ class CatalogScreenState extends State<CatalogScreen> {
       });
 
       final apiService = ApiService();
-      final subcategories = await apiService.getCategories(parentCategoryId: parentCategoryId);
+      final subcategories = await apiService.getCategories(
+        parentCategoryId: parentCategoryId,
+      );
 
       setState(() {
         _subcategories = subcategories;
@@ -134,7 +140,9 @@ class CatalogScreenState extends State<CatalogScreen> {
       final currentCategoryId = _categoryPath.last.id;
       try {
         final apiService = ApiService();
-        final categories = await apiService.getProducts(categoryId: currentCategoryId);
+        final categories = await apiService.getProducts(
+          categoryId: currentCategoryId,
+        );
 
         setState(() {
           _productCategories = categories;
@@ -195,12 +203,7 @@ class CatalogScreenState extends State<CatalogScreen> {
 
   Future<void> _addToCart(int productId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      final apiService = ApiService();
-      apiService.setToken(token);
-
-      await apiService.addItemToCart(productId: productId, quantity: 1);
+      await context.read<CartProvider>().addItem(productId, 1);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -212,9 +215,9 @@ class CatalogScreenState extends State<CatalogScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
       }
     }
   }
@@ -283,7 +286,9 @@ class CatalogScreenState extends State<CatalogScreen> {
                   if (_showingProducts && _categoryPath.isNotEmpty) {
                     _loadProducts(_categoryPath.last.id);
                   } else {
-                    final parentId = _categoryPath.isNotEmpty ? _categoryPath.last.id : 0;
+                    final parentId = _categoryPath.isNotEmpty
+                        ? _categoryPath.last.id
+                        : 0;
                     _loadSubcategories(parentId);
                   }
                 },
@@ -300,29 +305,30 @@ class CatalogScreenState extends State<CatalogScreen> {
       backgroundColor: const Color(0xFFF7F7F8),
       appBar: AppBar(
         leading: _canGoBack
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _goBack,
-              )
+            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: _goBack)
             : null,
         title: Text(_getCategoryTitle()),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        actions: _showingProducts ? [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _openFilters,
-          ),
-        ] : null,
+        actions: _showingProducts
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: _openFilters,
+                ),
+              ]
+            : null,
       ),
       body: _showingProducts ? _buildProductsView() : _buildCategoriesView(),
-      endDrawer: _showingProducts ? FilterDrawer(
-        onApplyFilters: (filters) {
-          // Обработка выбранных фильтров
-          Navigator.pop(context);
-        },
-      ) : null,
+      endDrawer: _showingProducts
+          ? FilterDrawer(
+              onApplyFilters: (filters) {
+                // Обработка выбранных фильтров
+                Navigator.pop(context);
+              },
+            )
+          : null,
     );
   }
 
@@ -332,23 +338,85 @@ class CatalogScreenState extends State<CatalogScreen> {
         final parentId = _categoryPath.isNotEmpty ? _categoryPath.last.id : 0;
         await _loadSubcategories(parentId);
       },
-      child: ListView.builder(
+      child: GridView.builder(
         padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.0,
+        ),
         itemCount: _subcategories.length,
         itemBuilder: (context, index) {
           final category = _subcategories[index];
-          return Card(
-            color: const Color(0xFFEAEEEB),
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: category.image.isNotEmpty
-                  ? Image.network(category.image, width: 50, height: 50, fit: BoxFit.cover)
-                  : const Icon(Icons.fastfood, size: 50),
-              title: Text(category.name),
-              onTap: () => _onSubcategorySelected(category.id, category.name),
-            ),
-          );
+          return _buildCategoryCard(category);
         },
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard(Category category) {
+    return GestureDetector(
+      onTap: () => _onSubcategorySelected(category.id, category.name),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAEEEB),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              // Изображение на весь контейнер
+              Positioned.fill(
+                child: category.image.isNotEmpty
+                    ? Image.network(
+                        category.image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.fastfood,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.fastfood,
+                          size: 60,
+                          color: Colors.grey,
+                        ),
+                      ),
+              ),
+              // Название категории
+              Positioned(
+                top: 16,
+                left: 16,
+                right: 16,
+                child: Text(
+                  category.name,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -366,18 +434,24 @@ class CatalogScreenState extends State<CatalogScreen> {
                 children: [
                   Text(
                     '${_products.length} товаров',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                   const Spacer(),
                   DropdownButton<String>(
                     value: _sortBy,
                     items: const [
-                      DropdownMenuItem(value: 'По популярности', child: Text('По популярности')),
-                      DropdownMenuItem(value: 'По цене', child: Text('По цене')),
-                      DropdownMenuItem(value: 'По названию', child: Text('По названию')),
+                      DropdownMenuItem(
+                        value: 'По популярности',
+                        child: Text('По популярности'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'По цене',
+                        child: Text('По цене'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'По названию',
+                        child: Text('По названию'),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value != null) {

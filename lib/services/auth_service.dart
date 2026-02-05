@@ -7,13 +7,13 @@ class AuthService extends ChangeNotifier {
   bool _isLoggedIn = false;
   String? _token;
   UserProfile? _userProfile; // Добавляем профиль пользователя
-  
+
   final ApiService apiService = ApiService();
 
   bool get isLoggedIn => _isLoggedIn;
   String? get token => _token;
   UserProfile? get userProfile => _userProfile;
-  
+
   // Геттеры для обратной совместимости
   String? get userName => _userProfile?.fullName;
   String? get userEmail => _userProfile?.email;
@@ -39,10 +39,7 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> login(String email, String password) async {
     try {
-      final response = await apiService.login(
-        email: email,
-        password: password,
-      );
+      final response = await apiService.login(email: email, password: password);
 
       _token = response['jwt'];
       apiService.setToken(_token);
@@ -101,6 +98,10 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Load profile error: $e');
+      final message = e.toString();
+      if (message.contains('401') || message.contains('Токен недействителен')) {
+        await logout();
+      }
     }
   }
 
